@@ -1,0 +1,60 @@
+---
+title: "Sensory and Motor Variance in Adaptation and Recalibration"
+author: "Marius 't Hart"
+date: "07/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Can we predicted the rate and asymptote of adaptation from measures from the aligned part of an experiment? And maybe we can either use or predict the level of implicit (and explicit?) adaptation?
+
+We start by installing a package that has some generic functions that could be useful in other projects as well.
+
+```{r}
+if (!require(Reach)) {
+  if (!require(devtools)) {
+    install.packages(devtools)
+  }
+  devtools::install_github('thartbm/Reach', ref='main', force=TRUE)
+}
+library(Reach)
+```
+
+Now we load all the functions used specifically for this project. They are separated in source files, grouped by topic:
+
+```{r}
+# here are some general utility functions:
+source('R/util.R')
+```
+
+
+Download the data:
+
+```{r}
+# from the data set, we are interested in groups that all learned the
+# same 30 degree rotation, without instructions
+
+groups<- c('control',
+           'cursorjump',
+           'handview',
+           'older_control',
+           'EDSmatch'
+           )
+
+downloadData(folder='data', 
+             unzip=TRUE, 
+             removezips=TRUE, 
+             checkfiles=TRUE, 
+             groups=groups, 
+             sections=c('aligned','rotated'), 
+             overwrite=TRUE)
+
+```
+
+This leaves us with 104 participants (out of 272). Perhaps some groups are not comparable, but we can add group as a covariate.
+
+
