@@ -32,17 +32,32 @@ source('R/util.R')
 ```
 
 
-Download the data:
+Now we are ready to download the full data set:
 
 ```{r}
 # from the data set, we are interested in groups that all learned the
 # same 30 degree rotation, without instructions
 
+
+# 'control', 'instructed', 'control60', 'instructed60',
+# 'cursorjump', 'handview', 'older_control', 'older_instructed'
+# 'EDS', 'EDSmatch', 'org_control', 'org_instructed', 'org_control60', and
+# 'org_instructed60'
+
 groups<- c('control',
+           'instructed',
+           'control60',
+           'instructed60',
            'cursorjump',
            'handview',
            'older_control',
-           'EDSmatch'
+           'older_instructed',
+           'EDS',
+           'EDSmatch',
+           'org_control',
+           'org_instrcuted',
+           'org_control60',
+           'org_instructed60'
            )
 
 downloadData(folder='data', 
@@ -55,6 +70,6 @@ downloadData(folder='data',
 
 ```
 
-This leaves us with 104 participants (out of 272). Perhaps some groups are not comparable, but we can add group as a covariate.
 
+This participant is not good: `0eeb51`.
 
