@@ -276,3 +276,162 @@ getBaselineDescriptors <- function(group_name, pp_name, baseline_filename) {
   sd_bias
   
 }
+
+dataChecks <- function( groups   = c('control'), 
+                        sessions = c('aligned'), 
+                        tasks    = c('training') ) {
+  
+  files <- read.csv( 'data/files.csv', 
+                     stringsAsFactors = FALSE)
+  
+  checklist <- expand.grid(group   = groups, 
+                           session = sessions, 
+                           task    = tasks)
+  
+  schedule <- getSchedule()
+  
+  for (idn in c(1:dim(checklist)[1])) {
+    
+    group   <- checklist$group[idn]
+    session <- checklist$session[idn]
+    task    <- checklist$task[idn]
+    
+    schedule_trial_nums <- schedule$trial_num[which(schedule$session == session &
+                                                    schedule$task    == task      )]
+    
+    participants <- files$participant[which(files$group == group)]
+    filenames <- files[which(files$group == group),sprintf('%s_%s',session, task)]
+    filenames <- sprintf('data/%s/%s/%s', group, participants, filenames)
+    
+    for (filename in filenames) {
+      
+      if( file.exists(filename) ) {
+        
+        # we will do two checks:
+        # 1) are all trial numbers that are there supposed to be there? (i.e. no trials from a different task)
+        # 2) are all trial numbers that should be there also there? (i.e. is all the data there?)
+        
+        df <- read.csv(filename)
+        
+        data_trial_nums <- unique(df$trial_num)
+        
+        if (length(setdiff(data_trial_nums, schedule_trial_nums)) > 0) {
+          cat(sprintf('unexpected trials in file: %s\n', filename))
+          print(setdiff(data_trial_nums, schedule_trial_nums))
+        }
+        if (length(setdiff(schedule_trial_nums, data_trial_nums)) > 0) {
+          cat(sprintf('trials missing from file: %s\n', filename))
+          print(setdiff(schedule_trial_nums, data_trial_nums))
+        }
+        
+        
+      } else {
+        
+        cat(sprintf('file does not exist: %s\n',filename))
+        
+      }
+      
+    }
+    
+  }
+  
+}
+
+getSchedule <- function() {
+  
+  trial_num <- c()
+  session <- c()
+  task <- c()
+  strategy <- c()
+  repetition <- c() 
+  
+  tasks_al <- c('training',
+                'activelocalization',
+                'training',
+                'passivelocalization',
+                'training',
+                'nocursor')
+  tasks_ro <- c('training',
+                'activelocalization',
+                'training',
+                'passivelocalization',
+                'training',
+                'nocursor',
+                'nocursor')
+  
+  thistrial <- 0
+  
+  for (sess in c('aligned','rotated')) {
+    
+    if (sess == 'aligned') {
+      tasks <- tasks_al
+    } else {
+      tasks <- tasks_ro
+      thistrial <- 0
+      nc_blocks <- 0
+    }
+    
+    firstTraining <- TRUE
+    
+    for (repe in c(1:4)) {
+      
+      for (tas in tasks) {
+        
+        if (tas == 'training') {
+          if (sess == 'aligned') {
+            if (firstTraining) {
+              ntri <- 45
+              firstTraining <- FALSE
+            } else {
+              ntri <- 9
+            }
+          } else {
+            if (firstTraining) {
+              ntri <- 90
+              firstTraining <- FALSE
+            } else {
+              ntri <- 30
+            }
+          }
+          strat <- NA
+        }
+        
+        if (tas %in% c('activelocalization','passivelocalization')) {
+          ntri <- 18
+          strat <- NA
+        }
+        
+        if (tas == 'nocursor') {
+          ntri <- 9
+          if (sess == 'aligned') {
+            strat <- NA
+          } else {
+            strat <- (nc_blocks + ((repe - 1) %% 2)) %% 2
+            nc_blocks <- nc_blocks + 1
+          }
+        }
+        
+        
+        trial_num <- c(trial_num, thistrial + c(1:ntri))
+        session <- c(session, rep(sess, ntri))
+        task <- c(task, rep(tas, ntri))
+        strategy <- c(strategy, rep(strat, ntri))
+        repetition <- c(repetition, rep(repe, ntri))
+        
+        thistrial <- thistrial + ntri
+        
+      }
+      
+    }
+    
+  }
+  
+  return( data.frame(
+                      trial_num,
+                      session,
+                      task,
+                      strategy,
+                      repetition
+                     ) ) 
+  
+}
