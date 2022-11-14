@@ -1,4 +1,9 @@
 
+
+
+
+# descriptors participant ----
+
 getParticipantDescriptors <- function(participant) {
   
   files <- read.csv('data/files.csv', stringsAsFactors = FALSE)
@@ -35,8 +40,18 @@ getParticipantDescriptors <- function(participant) {
   
   # ALIGNED
   
+  # get aligned training reach deviations
+  data[['aligned_training_reachdeviatons']] <- getReachDeviations(data[['aligned_training']])
+  
+  # get aligned nocursor reach deviations
+  data[['aligned_nocursor_reachdeviatons']] <- getReachDeviations(data[['aligned_nocursor']])
   
   # get baseline training biases
+  
+  baseline_biases <- getBaselineTrainingBiases(schedule=schedule, 
+                                               df=data[['aligned_training']])
+  
+
   
   # get baseline no-cursor biases
   
@@ -49,6 +64,13 @@ getParticipantDescriptors <- function(participant) {
   # get participant group and EI/IE
   
   
+  # ROTATED
+  
+  # get rotated training reach deviations
+  data[['rotated_training_reachdeviatons']] <- getReachDeviations(data[['rotated_training']])
+  
+  # get rotated nocursor reach deviations
+  data[['rotated_nocursor_reachdeviatons']] <- getReachDeviations(data[['rotated_nocursor']])
   
   
 }
@@ -81,4 +103,39 @@ readParticipantData <- function(participant=participant,
   
   return(data)
 
+}
+
+getReachDeviations <- function(df) {
+  
+  # select only relevant samples:
+  df <- df[which( df$trialselected  == 1 &
+                  df$sampleselected == 1 &
+                  df$maxvelocity    == 1),]
+  
+  # get samples on the trajectory:
+  x <- df$handx_cm
+  y <- df$handy_cm
+  
+  # opposite of target angle in radians
+  theta <- (-df$targetangle_deg/180)*pi
+  # un-rotate samples by target angle
+  X <- (x * cos(theta)) - (y * sin(theta))
+  Y <- (x * sin(theta)) + (y * cos(theta))
+  
+  # get the remaining reach deviation in degrees:
+  df$reachdev_deg <- ((atan2(Y, X) / pi) * 180)
+  
+  #print(df$reachdev_deg)
+  
+  return(df$reachdev_deg)
+  
+}
+
+getBaselineTrainingBiases <- function(schedule, df) {
+  
+  training_trials <- schedule$trial_num[which(schedule$session=='aligned' & schedule$task=='training')]
+  training_block_ends <- which(diff(training_trials) > 1)
+  
+  return(NULL)
+  
 }
