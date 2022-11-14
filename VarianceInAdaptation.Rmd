@@ -1,5 +1,5 @@
 ---
-title: "Sensory and Motor Variance in Adaptation and Recalibration"
+title: "Sensory and Motor Variance in Adaptation and Proprioceptive Recalibration"
 author: "Marius 't Hart"
 date: "07/11/2022"
 output: html_document
@@ -9,10 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Variance in movements has sometimes been seen as a measure of exploration, which is thought to support motor adaptation. For example, people with larger movement variability may adapt to a perturbation quicker.
 
-Can we predicted the rate and asymptote of adaptation from measures from the aligned part of an experiment? And maybe we can either use or predict the level of implicit (and explicit?) adaptation?
+Similarly, if localization of an unseen hand after an outward reach depends on proprioception, and this sensory signal may be recalibrated, then a maximum likelihood approach would predict that people with less reliable (i.e. more variable) proprioception, recalibrated proprioception to a larger degree.
 
-We start by installing a package that has some generic functions that could be useful in other projects as well.
+We have published four papers on related topics, that all use the same paradigm. Here we combine all this data to have a suitable data set to probe questions related to the role that variance has in adaptation processes. For some questions, we can include pilot data where no adaptation was recorded (i.e. only aligned sessions are available).
+
+We start by installing a package with generic functions for analyzing reach data.
 
 ```{r}
 if (!require(Reach)) {
@@ -53,9 +56,21 @@ groups<- c('control',
            'older_control',
            'older_instructed',
            'EDS',
-           'EDSmatch',
+           'EDSmatch'
+)
+
+downloadData(folder='data', 
+             unzip=TRUE, 
+             removezips=TRUE, 
+             checkfiles=TRUE, 
+             groups=groups, 
+             sections=c('aligned','rotated'), 
+             overwrite=TRUE)
+
+
+groups <- c(
            'org_control',
-           'org_instrcuted',
+           'org_instructed',
            'org_control60',
            'org_instructed60'
            )
@@ -68,8 +83,46 @@ downloadData(folder='data',
              sections=c('aligned','rotated'), 
              overwrite=TRUE)
 
+
 ```
 
+And we can test if all of the data is there:
 
-This participant is not good: `0eeb51`.
+```{r}
+
+groups <- c('control',
+            'instructed',
+            'control60',
+            'instructed60',
+            'cursorjump',
+            'handview',
+            'older_control',
+            'older_instructed',
+            'EDS',
+            'EDSmatch'
+            )
+
+sessions <- c('aligned',
+              'rotated')
+
+tasks <- c('training',
+           'activelocalization',
+           'passivelocalization',
+           'nocursor')
+
+dataChecks( groups   = groups, 
+            sessions = sessions, 
+            tasks    = tasks )
+  
+groups <- c('org_control',
+            'org_instructed',
+            'org_control60',
+            'org_instructed60')
+sessions <- c('aligned')
+
+dataChecks( groups   = groups, 
+            sessions = sessions, 
+            tasks    = tasks )
+  
+```
 
