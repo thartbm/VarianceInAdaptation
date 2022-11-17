@@ -7,7 +7,9 @@ getAllDescriptors <- function() {
   
   files <- read.csv('data/files.csv', stringsAsFactors = FALSE)
   
-  participants <- files$participant[1:3]
+  #participants <- files$participant[1:3]
+  participants <- files$participant
+  #participants <- files$participant[70:79]
   
   groups <- files$group[which(files$participant %in% participants)]
   
@@ -16,6 +18,10 @@ getAllDescriptors <- function() {
   descriptors <- cbind('group'=groups,
                        'participant'=participants, 
                        as.data.frame(descriptors)    )
+  
+  for (name in names(descriptors)) {
+    descriptors[,name] <- unlist(descriptors[,name])
+  }
   
   return(descriptors)
   
@@ -70,6 +76,10 @@ getParticipantDescriptors <- function(participant) {
     descriptors[['passivelocalization_shift']] <- NA
     descriptors[['inclusion']] <- NA
     descriptors[['exclusion']] <- NA
+    
+    #print(descriptors)
+    
+    return(descriptors)
   }
   
   # # # # # # # # # # #
@@ -95,8 +105,8 @@ getParticipantDescriptors <- function(participant) {
                               strategy=strat,
                               schedule=schedule)
   
-  descriptors[['inclusion']] <- RAE['inclusion']
-  descriptors[['exclusion']] <- RAE['exclusion']
+  descriptors[['inclusion']] <- as.numeric(RAE['inclusion'])
+  descriptors[['exclusion']] <- as.numeric(RAE['exclusion'])
   
   return(descriptors)
   
@@ -395,7 +405,8 @@ getADfit <- function(df) {
 
 cleanLocalization <- function(df) {
   
-  ntrials <- dim(df)[1]
+  #ntrials <- dim(df)[1]
+  df <- df[which(df$selected == 1),]
   
   # remove hand angles too far from the arc?
   idx <- which( df$targetangle_deg > (df$arcangle_deg - 45) &
@@ -412,6 +423,8 @@ cleanLocalization <- function(df) {
   idx <- which( df$taperror_deg > inlr[1] & 
                 df$taperror_deg < inlr[2]   )
   df <- df[idx,]
+  
+  print(length(idx))
   
   # further outlier removal?
   # no.
