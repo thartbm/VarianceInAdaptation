@@ -23,6 +23,8 @@ getAllDescriptors <- function() {
     descriptors[,name] <- unlist(descriptors[,name])
   }
   
+  write.csv(descriptors, 'data/descriptors.csv', quote=F, row.names = F)
+  
   return(descriptors)
   
 }
@@ -424,7 +426,7 @@ cleanLocalization <- function(df) {
                 df$taperror_deg < inlr[2]   )
   df <- df[idx,]
   
-  print(length(idx))
+  #print(length(idx))
   
   # further outlier removal?
   # no.
