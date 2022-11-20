@@ -1,11 +1,11 @@
 ---
 title: "Sensory and Motor Variance in Adaptation and Proprioceptive Recalibration"
 author: "Marius 't Hart"
-date: "07/11/2022"
+date: "20/11/2022"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup_knitr, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -17,7 +17,7 @@ We have published four papers on related topics, that all use the same paradigm.
 
 We start by installing a package with generic functions for analyzing reach data.
 
-```{r}
+```{r get_reach_package}
 if (!require(Reach)) {
   if (!require(devtools)) {
     install.packages(devtools)
@@ -29,15 +29,17 @@ library(Reach)
 
 Now we load all the functions used specifically for this project. They are separated in source files, grouped by topic:
 
-```{r}
+```{r source_R_code}
 # here are some general utility functions:
 source('R/util.R')
+# this does data pre-processing:
+source('R/data.R')
 ```
 
 
 Now we are ready to download the full data set:
 
-```{r}
+```{r download_data}
 # from the data set, we are interested in groups that all learned the
 # same 30 degree rotation, without instructions
 
@@ -88,7 +90,7 @@ downloadData(folder='data',
 
 And we can test if all of the data is there:
 
-```{r}
+```{r check_data}
 
 groups <- c('control',
             'instructed',
@@ -124,5 +126,13 @@ dataChecks( groups   = groups,
             sessions = sessions, 
             tasks    = tasks )
   
+```
+
+One participants seems to be missing a block of 9 trials from each of the 4 kinds of localization, but other than that, there are only one or two trials missing from each participant. This is workable data.
+
+As a final preparation we get a file with descriptors for several measurements for every participant. This also takes some time, but has to be done only once.
+
+```{r get_descriptors_file}
+getAllDescriptors()
 ```
 
