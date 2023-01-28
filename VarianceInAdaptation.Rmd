@@ -2,7 +2,10 @@
 title: "Sensory and Motor Variance in Adaptation and Proprioceptive Recalibration"
 author: "Marius 't Hart"
 date: "20/11/2022"
-output: html_document
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup_knitr, include=FALSE}
@@ -34,6 +37,8 @@ Now we load all the functions used specifically for this project. They are separ
 source('R/util.R')
 # this does data pre-processing:
 source('R/data.R')
+# make plots/figures:
+source('R/figures.R')
 ```
 
 
@@ -61,13 +66,13 @@ groups<- c('control',
            'EDSmatch'
 )
 
-downloadData(folder='data', 
-             unzip=TRUE, 
-             removezips=TRUE, 
-             checkfiles=TRUE, 
-             groups=groups, 
-             sections=c('aligned','rotated'), 
-             overwrite=TRUE)
+# downloadData(folder='data', 
+#              unzip=TRUE, 
+#              removezips=TRUE, 
+#              checkfiles=TRUE, 
+#              groups=groups, 
+#              sections=c('aligned','rotated'), 
+#              overwrite=TRUE)
 
 
 groups <- c(
@@ -77,13 +82,13 @@ groups <- c(
            'org_instructed60'
            )
 
-downloadData(folder='data', 
-             unzip=TRUE, 
-             removezips=TRUE, 
-             checkfiles=TRUE, 
-             groups=groups, 
-             sections=c('aligned','rotated'), 
-             overwrite=TRUE)
+# downloadData(folder='data', 
+#              unzip=TRUE, 
+#              removezips=TRUE, 
+#              checkfiles=TRUE, 
+#              groups=groups, 
+#              sections=c('aligned','rotated'), 
+#              overwrite=TRUE)
 
 
 ```
@@ -112,9 +117,9 @@ tasks <- c('training',
            'passivelocalization',
            'nocursor')
 
-dataChecks( groups   = groups, 
-            sessions = sessions, 
-            tasks    = tasks )
+# dataChecks( groups   = groups, 
+#             sessions = sessions, 
+#             tasks    = tasks )
   
 groups <- c('org_control',
             'org_instructed',
@@ -122,9 +127,9 @@ groups <- c('org_control',
             'org_instructed60')
 sessions <- c('aligned')
 
-dataChecks( groups   = groups, 
-            sessions = sessions, 
-            tasks    = tasks )
+# dataChecks( groups   = groups, 
+#             sessions = sessions, 
+#             tasks    = tasks )
   
 ```
 
@@ -133,6 +138,104 @@ One participants seems to be missing a block of 9 trials from each of the 4 kind
 As a final preparation we get a file with descriptors for several measurements for every participant. This also takes some time, but has to be done only once.
 
 ```{r get_descriptors_file}
-getAllDescriptors()
+# getAllDescriptors()
+```
+
+# Before adaptation
+
+What is the variance in all these measures?
+
+First, we look at reaches with and without feedback:
+
+1. reach training variability
+2. open-loop reach variability
+3. relation
+
+```{r baseline_reach_variability, fig.width=8, fig.height=4}
+
+plotBaselineVariability(groups='all',
+                        x='training',
+                        y='nocursor')
+
+```
+
+
+Then, we look at active and passive hand localization:
+
+4. active hand localization variability
+5. passive hand localization variability
+6. relation
+
+```{r baseline_localization_variability, fig.width=8, fig.height=4}
+
+plotBaselineVariability(groups='all',
+                        x='activelocalization',
+                        y='passivelocalization')
+
+```
+
+
+# After adaptation
+
+## Predicting localization shifts
+
+If the sensory modality with the larger uncertainty is the one that gets recalibrated the most, then does it also make sense that people with larger localization variance recalibrate proprioception more?
+
+If so, we ask: does higher variance in hand localization relate to larger or smaller shifts in hand localization after training?
+
+Is this different for active or passive localization? Or should we be looking at the difference?
+
+```{r localization_shifts}
+plotPredictedAdaptation(IVs=c('activelocalization_sd',   'passivelocalization_sd'),
+                        DVs=c('activelocalization_shift','passivelocalization_shift'),
+                        groups=c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control") )
+```
+
+
+## Predicting adaptation rate
+
+Here we explore the exploration-exploitation hypothesis: people with more reach variance learn/adapt faster because they can exploit what they learn during this exploration.
+
+Is the speed of adaptation related to any of the baseline reach variance measures?
+
+```{r adaptation_rate}
+
+plotPredictedAdaptation(IVs=c('training_sd',  'nocursor_sd',   'training_sd',        'nocursor_sd'),
+                        DVs=c('training_rate','training_rate', 'training_asymptote', 'training_asymptote'),
+                        groups=c('control','EDS','EDSmatch','older_control','cursorjump'))
+
+
+```
+
+
+## Predicting adaptation asymptote
+
+Maybe it's not the rate of change that is predicted, but the asymptote: how much you learn or adapt?
+
+Is the amount of adaptation related to any of the baseline variance measures?
+
+(Plotted above: bottom row.)
+
+## Predicting reach aftereffects
+
+Are with/without strategy reach aftereffects related to any of the baseline variance measures? (In particular variance in baseline no-cursor reach deviations.)
+
+```{r}
+plotPredictedAdaptation(IVs=c('training_sd', 'nocursor_sd', 'training_sd', 'nocursor_sd'),
+                        DVs=c('exclusion',   'exclusion',   'inclusion',   'inclusion'),
+                        groups=c('control','EDS','EDSmatch','older_control','cursorjump'))
+```
+
+
+# Demographics
+
+Here we could look at effects of age, sex and other demographics.
+
+## Variability in Localization and Sex
+
+This is the effect of sex on aligned localization variability. We only look at people who self-identified their biological sex as male or female:
+
+```{r}
+plotBaselineVariabilitySex()
 ```
 
