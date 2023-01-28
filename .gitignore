@@ -41,3 +41,5 @@ vignettes/*.pdf
 # temprorary files:
 *.pdf
 *.png
+*.docx
+*.svg
