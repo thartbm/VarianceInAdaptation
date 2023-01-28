@@ -222,7 +222,7 @@ Is the amount of adaptation related to any of the baseline variance measures?
 
 Are with/without strategy reach aftereffects related to any of the baseline variance measures? (In particular variance in baseline no-cursor reach deviations.)
 
-```{r}
+```{r RAE_predictors}
 plotPredictedAdaptation(IVs=c('training_sd', 'nocursor_sd', 'training_sd', 'nocursor_sd'),
                         DVs=c('exclusion',   'exclusion',   'inclusion',   'inclusion'),
                         groups=c('control','EDS','EDSmatch','older_control','cursorjump'))
@@ -237,22 +237,30 @@ Here we could look at effects of age, sex and other demographics.
 
 This is the effect of sex on aligned localization variability. We only look at people who self-identified their biological sex as male or female:
 
-```{r}
+```{r variability_sex}
 plotBaselineVariabilitySex()
 ```
-# TRY-OUT
+There is some evidence that biases in reaching depend on sex, so we might also want to test that.
+
+# Try out plots
 
 Here are some things I was apparently trying out.
 
+## Decay of Localization Bias
+
 Decay of localization biases across the 18 trials of each rotated block. There might be a break point between trials 9 and 10, as each participant only does the first or second half as active or passive localization.
 
-```{r}
+```{r localization_decay_plot}
 plotLocalizationDecay()
 ```
 
+To check: only for active localization, early on in the rotated session is there some form of decay. Later on it stabilizes. Does it stabilize at the same point as where passive localization is?
+
+## Decay of Reach Aftereffects
+
 Decay of reach aftereffects across the 18 trials of each rotated no-cursor block. These are only groups/conditions with normal feedback, a 30 degree rotation and without instructions about the rotation (4 groups: 'control', 'older_control', 'EDS' and 'EDSmatch'). This figure/data set is split by Exclude first and Include first, but each row of panels in the figures is based on the same subset of participants, and each participant only contributes to 1 row of panels.
 
-```{r}
+```{r RAE_decay_plot}
 plotRAEdecay()
 ```
 
