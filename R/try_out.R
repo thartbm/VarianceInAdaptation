@@ -66,14 +66,14 @@ plotLocalizationDecay <- function() {
       subtask <- subtasks[subtask_no]
       trialnums <- df$trial_num[which(df$subtask == subtask)]
       
-      print(length(trialnums))
+      #print(length(trialnums))
       
       offset <- min(trialnums) - 1
       
       st_df <- df[which(df$subtask == subtask),]
       
-      print(str(st_df))
-      print(offset)
+      #print(str(st_df))
+      #print(offset)
       
       plot(st_df$trial_num - offset, st_df$taperror_deg * -1, 
            xlim=c(0,19),ylim=c(0,20),
