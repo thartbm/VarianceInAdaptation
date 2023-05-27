@@ -61,7 +61,31 @@ getParticipantDescriptors <- function(participant) {
   descriptors[['aligned_nocursor_sd']] <- getBaselineSD(schedule = schedule,
                                                         task = 'nocursor',
                                                         df = data[['aligned_nocursor_reachdeviations']])
+  descriptors[['aligned_nocursor_sd_endpoint']] <- getBaselineSD(schedule = schedule,
+                                                                 task = 'nocursor',
+                                                                 df = data[['aligned_nocursor_reachdeviations_endpoint']])
   
+  # get bias and error:
+  descriptors[['aligned_training_bias']] <- getAverageError(schedule=schedule,
+                                             task = 'training',
+                                             df = data[['aligned_training_reachdeviations']],
+                                             do_abs=FALSE)
+  descriptors[['aligned_training_abserror']] <- getAverageError(schedule=schedule,
+                                                 task = 'training',
+                                                 df = data[['aligned_training_reachdeviations']],
+                                                 do_abs=TRUE)
+  
+  descriptors[['aligned_nocursor_bias']] <- getAverageError(schedule=schedule,
+                                             task = 'nocursor',
+                                             df = data[['aligned_nocursor_reachdeviations']],
+                                             do_abs=FALSE)
+  descriptors[['aligned_nocursor_abserror']] <- getAverageError(schedule=schedule,
+                                                 task = 'nocursor',
+                                                 df = data[['aligned_nocursor_reachdeviations']],
+                                                 do_abs=TRUE)
+  
+  
+    
   descriptors[['aligned_activelocalization_sd']] <- getLocalizationSD(data[['aligned_activelocalization']])
   
   descriptors[['aligned_passivelocalization_sd']] <- getLocalizationSD(data[['aligned_passivelocalization']])
@@ -145,6 +169,9 @@ prepareParticipantData <- function(participant) {
   # get aligned nocursor reach deviations
   data[['aligned_nocursor_reachdeviations']] <- getReachDeviationsMV(data[['aligned_nocursor']])
   
+  # get aligned nocursor reach deviations at endpoint
+  data[['aligned_nocursor_reachdeviations_endpoint']] <- getReachDeviationsEP(data[['aligned_nocursor']])
+  
   # biases in training reaches:
   data[['training_biases']] <- getBaselineBiases(schedule = schedule, 
                                        task = 'training', 
@@ -154,6 +181,11 @@ prepareParticipantData <- function(participant) {
   data[['nocursor_biases']] <- getBaselineBiases(schedule = schedule, 
                                        task = 'nocursor', 
                                        df   = data[['aligned_nocursor_reachdeviations']])
+
+  # biases in no-cursor reaches at endpoint:
+  data[['nocursor_biases_endpoint']] <- getBaselineBiases(schedule = schedule,
+                                                          task='nocursor',
+                                                          df = data[['aligned_nocursor_reachdeviations_endpoint']])
   
   # baseline training reaches:
   data[['aligned_training_reachdeviations']] <- baselineReaches(schedule=schedule,
@@ -165,6 +197,12 @@ prepareParticipantData <- function(participant) {
                                                                 task='nocursor',
                                                                 df=data[['aligned_nocursor_reachdeviations']],
                                                                 biases=data[['nocursor_biases']])
+  
+  # baseline nocursor reaches at endpoint:
+  data[['aligned_nocursor_reachdeviations_endpoint']] <- baselineReaches(schedule=schedule,
+                                                                         task='nocursor',
+                                                                         df=data[['aligned_nocursor_reachdeviations_endpoint']],
+                                                                         biases=data[['nocursor_biases_endpoint']])
   
   # clean the aligned active localization data:
   data[['aligned_activelocalization']] <- cleanLocalization(data[['aligned_activelocalization']])
@@ -283,6 +321,35 @@ getReachDeviationsMV <- function(df) {
   
 }
 
+getReachDeviationsEP <- function(df) {
+  
+  # select only relevant samples:
+  df <- df[which( df$trialselected  == 1 &
+                  df$sampleselected == 1),]
+  
+  # now select only the last sample of the selected samples from each trial:
+  dat <- data.table::data.table(df)
+  dat <- dat[dat[, .I[which.max(time_ms)], by=trial_num]$V1]
+  df <- data.frame(dat)
+  
+  # get samples on the trajectory:
+  x <- df$handx_cm
+  y <- df$handy_cm
+  
+  # opposite of target angle in radians
+  theta <- (-df$targetangle_deg/180)*pi
+  # un-rotate samples by target angle
+  X <- (x * cos(theta)) - (y * sin(theta))
+  Y <- (x * sin(theta)) + (y * cos(theta))
+  
+  # get the remaining reach deviation in degrees:
+  df$reachdev_deg <- ((atan2(Y, X) / pi) * 180)
+  
+  return(df)
+  
+}
+
+
 baselineReaches <- function(schedule,
                             task,
                             df,
@@ -396,8 +463,9 @@ getADfit <- function(df) {
   
   signal[df$trial_num] <- df$reachdev_deg
   
-  fit <- Reach::asymptoticDecayFit(schedule = schedule,
-                                   signal =   signal)
+  # fit <- Reach::asymptoticDecayFit(schedule = schedule,
+  #                                  signal =   signal)
+  fit <- Reach::exponentialFit(signal = signal) # this function is faster, and gives the same output
   
   return(fit)
   
@@ -512,5 +580,39 @@ getReachAftereffects <- function(df,
   
   return(c('inclusion'=inclusion,
            'exclusion'=exclusion))
+  
+}
+
+
+# errors / bias -----
+
+getAverageError <- function(schedule, task, df, do_abs=FALSE) {
+  
+  # identify the relevant trial numbers:
+  aligned_trials <- schedule$trial_num[which(schedule$session=='aligned' & schedule$task==task)]
+  
+  # we want trials at the end of blocks: when the index jumps more than 1
+  ends <- c(aligned_trials[which(diff(aligned_trials) > 1)], max(aligned_trials))
+  
+  if (task == 'training') {
+    ntrials <- rep(2,length(ends)) # last 3 of each block
+    #ntrials[1] <- 5
+  }
+  if (task == 'nocursor') {
+    ntrials <- rep(8,length(ends)) # last (all) 9 of each block
+  }
+  
+  trials <- c()
+  for (idx in c(1:length(ends))) {
+    trials <- c(trials, c((ends[idx]-ntrials[idx]):ends[idx]))
+  }
+  
+  df <- df[which(df$trial_num %in% trials),]
+  
+  reachdevs <- df$reachdev_deg
+  
+  if (do_abs) {reachdevs <- abs(reachdevs)}
+
+  return(mean(reachdevs))
   
 }

@@ -265,3 +265,14 @@ plotRAEdecay()
 ```
 
 There might be some subtle differences, e.g., include strategy reach aftereffects are higher than exclude strategy reach aftereffects in blocks where you start with include strategy no-cursor trials.
+
+# No-cursors predicted by variance in proprioception
+
+Is variance in no-cursor reaches predicted by localization?
+
+```{r nocursorsd_propsd}
+plotPredictedAdaptation(IVs=c('activelocalization_sd', 'passivelocalization_sd'),
+                        DVs=c('aligned_nocursor_sd',   'aligned_nocursor_sd'),
+                        groups=c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control") )
+```
+
