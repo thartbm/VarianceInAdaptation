@@ -149,9 +149,9 @@ prepareParticipantData <- function(participant) {
   
   # determine which sessions are available:
   sessions <- c('aligned',
-                'rotated')
+                'rotated') # most groups have both sessions
   if (substr(group,1,4) == 'org_') {
-    sessions <- c('aligned')
+    sessions <- c('aligned') # but not the pilots/orgs
   }
   
   # read all the data?
