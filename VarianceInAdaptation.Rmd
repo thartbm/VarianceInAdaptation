@@ -4,8 +4,8 @@ author: "Marius 't Hart"
 date: "20/11/2022"
 output:
   word_document: default
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup_knitr, include=FALSE}
@@ -22,10 +22,10 @@ We start by installing a package with generic functions for analyzing reach data
 
 ```{r get_reach_package}
 if (!require(Reach)) {
-  if (!require(devtools)) {
-    install.packages(devtools)
+  if (!require(remotes)) {
+    install.packages(remotes)
   }
-  devtools::install_github('thartbm/Reach', ref='main', force=TRUE)
+  remotes::install_github('thartbm/Reach', ref='main', force=TRUE)
 }
 library(Reach)
 ```
