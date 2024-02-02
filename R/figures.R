@@ -933,88 +933,88 @@ add_ODR_regression <- function(x, y, col, pch=16, alpha=34, cex=1) {
 # try-outs -----
 
 
-# plotBaselineVariability <- function(groups='all', x, y) {
-#   
-#   descriptors <- read.csv('data/descriptors.csv', 
-#                           stringsAsFactors = FALSE)
-#   
-#   if (length(groups) == 1 & groups[1] == 'all') {
-#     # simply use all the data?
-#     # or remove the older participants?
-#   } else {
-#     descriptors <- descriptors[which(descriptors$group %in% groups),]
-#   }
-#   
-#   # get the data:
-#   x_col <- descriptors[,sprintf('aligned_%s_sd',x)]
-#   y_col <- descriptors[,sprintf('aligned_%s_sd',y)]
-#   
-#   layout( mat = matrix( c(1:2),
-#                         ncol=2,
-#                         nrow=1,
-#                         byrow=TRUE))
-#   
-#   ax_scale <- max(c(max(x_col),max(y_col)))
-#   ax_scale <- 30 #? this would work for all data... but it's not ideal
-#   
-#   x_dens <- density(x_col,
-#                     n=201, from=0, to=ax_scale) 
-#   y_dens <- density(y_col,
-#                     n=201, from=0, to=ax_scale)
-#   
-#   dens_y_scale <- max(c(max(x_dens$y),max(y_dens$y)))
-#   
-#   plot(x_dens,bty='n',ylim=c(0,dens_y_scale),col='blue',xlab=sprintf('N=%d',length(x_col)),main='')
-#   lines(y_dens$x,y_dens$y,col='red')
-#   legend(ax_scale*(1/3),dens_y_scale*(2/3),legend=c(x,y),col=c('blue','red'),bty='n',lty=1)
-#   #plot(y_dens,bty='n',ylim=c(0,dens_y_scale))
-#   
-#   plot(x_col, y_col,
-#        xlim=c(0,ax_scale), ylim=c(0,ax_scale),
-#        xlab=sprintf('aligned %s sd',x),
-#        ylab=sprintf('aligned %s sd',y),
-#        bty='n')
-#   
-#   lines(c(0,ax_scale),c(0,ax_scale),col='#999999',lty=2)
-#   
-# }
+plotBaselineVariability <- function(groups='all', x, y) {
 
-# plotPredictedAdaptation <- function(IVs,DVs,groups='all') {
-#   
-#   #IVs have to be from aligned-, and
-#   #DVs have to be from rotated session
-#   
-#   descriptors <- read.csv('data/descriptors.csv', 
-#                           stringsAsFactors = FALSE)
-#   
-#   if (length(groups) == 1 & groups[1] == 'all') {
-#     # simply use all the data?
-#     # or remove the older participants?
-#   } else {
-#     descriptors <- descriptors[which(descriptors$group %in% groups),]
-#   }
-#   
-#   npairs <- min(length(IVs),length(DVs))
-#   
-#   layout( mat = matrix( c(1:(ceiling(npairs/2)*2)),
-#                         nrow = ceiling(npairs/2),
-#                         ncol = 2,
-#                         byrow = TRUE))
-#   
-#   for (pair in c(1:npairs)) {
-#     
-#     x <- descriptors[,sprintf('aligned_%s',IVs[pair])]
-#     y <- descriptors[,sprintf('%s',DVs[pair])]
-#     
-#     plot(x,y,
-#          main='',xlab='',ylab='',
-#          bty='n')
-#     
-#   }
-#   
-#   
-# }
-# 
+  descriptors <- read.csv('data/descriptors.csv',
+                          stringsAsFactors = FALSE)
+
+  if (length(groups) == 1 & groups[1] == 'all') {
+    # simply use all the data?
+    # or remove the older participants?
+  } else {
+    descriptors <- descriptors[which(descriptors$group %in% groups),]
+  }
+
+  # get the data:
+  x_col <- descriptors[,sprintf('aligned_%s_sd',x)]
+  y_col <- descriptors[,sprintf('aligned_%s_sd',y)]
+
+  layout( mat = matrix( c(1:2),
+                        ncol=2,
+                        nrow=1,
+                        byrow=TRUE))
+
+  ax_scale <- max(c(max(x_col),max(y_col)))
+  ax_scale <- 30 #? this would work for all data... but it's not ideal
+
+  x_dens <- density(x_col,
+                    n=201, from=0, to=ax_scale)
+  y_dens <- density(y_col,
+                    n=201, from=0, to=ax_scale)
+
+  dens_y_scale <- max(c(max(x_dens$y),max(y_dens$y)))
+
+  plot(x_dens,bty='n',ylim=c(0,dens_y_scale),col='blue',xlab=sprintf('N=%d',length(x_col)),main='')
+  lines(y_dens$x,y_dens$y,col='red')
+  legend(ax_scale*(1/3),dens_y_scale*(2/3),legend=c(x,y),col=c('blue','red'),bty='n',lty=1)
+  #plot(y_dens,bty='n',ylim=c(0,dens_y_scale))
+
+  plot(x_col, y_col,
+       xlim=c(0,ax_scale), ylim=c(0,ax_scale),
+       xlab=sprintf('aligned %s sd',x),
+       ylab=sprintf('aligned %s sd',y),
+       bty='n')
+
+  lines(c(0,ax_scale),c(0,ax_scale),col='#999999',lty=2)
+
+}
+
+plotPredictedAdaptation <- function(IVs,DVs,groups='all') {
+
+  #IVs have to be from aligned-, and
+  #DVs have to be from rotated session
+
+  descriptors <- read.csv('data/descriptors.csv',
+                          stringsAsFactors = FALSE)
+
+  if (length(groups) == 1 & groups[1] == 'all') {
+    # simply use all the data?
+    # or remove the older participants?
+  } else {
+    descriptors <- descriptors[which(descriptors$group %in% groups),]
+  }
+
+  npairs <- min(length(IVs),length(DVs))
+
+  layout( mat = matrix( c(1:(ceiling(npairs/2)*2)),
+                        nrow = ceiling(npairs/2),
+                        ncol = 2,
+                        byrow = TRUE))
+
+  for (pair in c(1:npairs)) {
+
+    x <- descriptors[,sprintf('aligned_%s',IVs[pair])]
+    y <- descriptors[,sprintf('%s',DVs[pair])]
+
+    plot(x,y,
+         main='',xlab='',ylab='',
+         bty='n')
+
+  }
+
+
+}
+
 
 
 # sex/gender (and other demographics?) ------
