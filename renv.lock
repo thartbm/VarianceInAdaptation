@@ -214,6 +214,22 @@
       ],
       "Hash": "543776ae6848fde2f48ff3816d0628bc"
     },
+    "bayestestR": {
+      "Package": "bayestestR",
+      "Version": "0.13.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "datawizard",
+        "graphics",
+        "insight",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "61f643ea5ee9fe0e70ab0246340b3c2e"
+    },
     "boot": {
       "Package": "boot",
       "Version": "1.3-28.1",
@@ -436,6 +452,19 @@
         "methods"
       ],
       "Hash": "cfbbb4aed6e78cd45f17123a9ec9981a"
+    },
+    "datawizard": {
+      "Package": "datawizard",
+      "Version": "0.9.1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "insight",
+        "stats",
+        "utils"
+      ],
+      "Hash": "51cf8172b52cfa5b4b988c73c37accfa"
     },
     "deSolve": {
       "Package": "deSolve",
@@ -719,6 +748,19 @@
         "elliptic"
       ],
       "Hash": "3195e099bdbe91e28310c818d925d471"
+    },
+    "insight": {
+      "Package": "insight",
+      "Version": "0.19.8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "methods",
+        "stats",
+        "utils"
+      ],
+      "Hash": "adcc19435135a4d211e5aa2e48e4f6b7"
     },
     "isoband": {
       "Package": "isoband",
@@ -1233,10 +1275,12 @@
     "renv": {
       "Package": "renv",
       "Version": "1.0.3",
-      "OS_type": null,
-      "NeedsCompilation": "no",
+      "Source": "Repository",
       "Repository": "CRAN",
-      "Source": "Repository"
+      "Requirements": [
+        "utils"
+      ],
+      "Hash": "41b847654f567341725473431dd0d5ab"
     },
     "reshape2": {
       "Package": "reshape2",
