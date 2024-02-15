@@ -100,23 +100,29 @@ fig5_a_variance_relations <- function(target='inline') {
 
 fig5_variance_relations <- function(target='inline') {
   
-  var_pairs <- list( c('aligned_training_sd','aligned_nocursor_sd'),
+  var_pairs <- list( c('aligned_nocursor_sd','aligned_training_sd'),
+                     # c('aligned_training_sd','aligned_nocursor_sd'),
                      c('aligned_training_sd','aligned_activelocalization_sd'),
                      c('aligned_training_sd','aligned_passivelocalization_sd'),
-                     c('aligned_nocursor_sd','aligned_training_sd'),
                      c('aligned_nocursor_sd','aligned_activelocalization_sd'),
                      c('aligned_nocursor_sd','aligned_passivelocalization_sd'))
   
-  exclude_groups <- c('older')
+  # exclude_groups <- c('older')
+  exclude_groups <- NULL
+  
+  mat <- matrix(c(1,1,2,3,1,1,4,5),ncol=4,nrow=2,byrow=TRUE)
   
   figX_scatters(target=target,
                 var_pairs=var_pairs,
                 filename='Fig5_sd_relations',
-                col_idx=c(2,3,4,1,3,4),
+                col_idx=c(1,3,4,3,4),
                 pch=1,
                 asp=1,
                 exclude_groups=exclude_groups,
-                addregression='ODR')
+                addregression='ODR',
+                width=11,
+                height=4,
+                mat=mat)
   
 }
 
@@ -139,7 +145,7 @@ fig6_a_efferent_localization <- function(target='inline') {
   
 }
 
-fig6_efferent_localization <- function(target='inline') {
+fig6_b_efferent_localization <- function(target='inline') {
   
   var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
   
@@ -156,6 +162,27 @@ fig6_efferent_localization <- function(target='inline') {
                 exclude_group=list(exclude_groups,NULL),
                 include_group=list(NULL,exclude_groups),
                 addregression='ODR')
+  
+}
+
+
+fig6_efferent_localization <- function(target='inline') {
+  
+  var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
+  
+  exclude_groups <- c()
+  
+  figX_multi_scatters(target=target,
+                      var_pairs=var_pairs,
+                      filename='Fig6_efferent_localization',
+                      col_idx=c(3),
+                      pch=1,
+                      lim=20,
+                      identity=TRUE,
+                      asp=1,
+                      exclude_group=list(NULL),
+                      # include_group=list(NULL,exclude_groups),
+                      addregression='ODR')
   
 }
 
@@ -264,7 +291,7 @@ fig8_localizationSD2_implicit <- function(target='inline') {
     c('aligned_passivelocalization_sd','passivelocalization_shift')
   )
   
-  exclude_groups <- c('older', 'org', '60', 'instructed')
+  exclude_groups <- c('org')
   
   limits <- list( c(0,20), c(-5,35),
                   c(0,20), c(-5,35),
@@ -300,7 +327,7 @@ fig9_localizationShift2_implicit <- function(target='inline') {
     c('passivelocalization_shift', 'exclusion')
   )
   
-  exclude_groups <- c('older', 'org', '60', 'instructed')
+  exclude_groups <- c('org') # 'instructed', 'older'
   
   limits <- list( c(10,-20), c(-5,35),
                   c(10,-20), c(-5,35)   )
@@ -352,7 +379,10 @@ figX_scatters <- function(target='inline',
                           asp=NA,
                           exclude_groups=c(),
                           add_info=TRUE,
-                          addregression='OLS') {
+                          addregression='OLS',
+                          width=NULL,
+                          height=NULL,
+                          mat=NULL) {
   
   colors <- getColors()
   
@@ -384,8 +414,12 @@ figX_scatters <- function(target='inline',
   
   npanels <- length(var_pairs)
   
-  width  <- c(4,8,7.5,6,NA,7.5,NA,11)[npanels]
-  height <- c(4,4,2.5,6,NA,5.0,NA,4 )[npanels]
+  if (is.null(width)) {
+    width  <- c(4,8,7.5,6,NA,7.5,NA,11)[npanels]
+  }
+  if (is.null(height)) {
+    height <- c(4,4,2.5,6,NA,5.0,NA,4 )[npanels]
+  }
   
   if (target=='svg') {
     svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
@@ -396,10 +430,13 @@ figX_scatters <- function(target='inline',
   
   par(mar=c(4.5, 4.5, 0.5, 0.5))
   
-  layout(mat=matrix(c(1:npanels), 
-                    ncol=c(1,2,3,2,NA,3,NA,4)[npanels], 
-                    byrow=TRUE)
-         )
+  if (is.null(mat)) {
+    mat <- matrix(c(1:npanels), 
+                  ncol=c(1,2,3,2,NA,3,NA,4)[npanels], 
+                  byrow=TRUE)
+  }
+  
+  layout(mat=mat)
   
   tick_map <- list('40'=c(0,10,20,30,40),
                    '30'=c(0,10,20,30),
@@ -541,18 +578,18 @@ figX_scatters <- function(target='inline',
 
 
 figX_multi_scatters <- function(target='inline',
-                          var_pairs,
-                          filename,
-                          col_idx,
-                          pch=16,
-                          lim=30,
-                          identity=FALSE,
-                          asp=NA,
-                          exclude_groups=c(),
-                          include_groups=c(),
-                          add_info=TRUE,
-                          info_offset=8,
-                          addregression='OLS') {
+                                var_pairs,
+                                filename,
+                                col_idx,
+                                pch=16,
+                                lim=30,
+                                identity=FALSE,
+                                asp=NA,
+                                exclude_groups=c(),
+                                include_groups=c(),
+                                add_info=TRUE,
+                                info_offset=8,
+                                addregression='OLS') {
   
   colors <- getColors()
   
@@ -677,7 +714,7 @@ figX_multi_scatters <- function(target='inline',
       if (addregression == 'OLS') {
         
         add_OLS_regression(x=x, y=y,
-                      col=col, pch=pch)
+                           col=col, pch=pch)
         
         if (add_info) {
           
@@ -744,6 +781,153 @@ figX_multi_scatters <- function(target='inline',
   }
   
 }
+
+
+fig10_multiple_regressions <- function(target='inline', add_info=TRUE) {
+  
+  width = 8
+  height = 5
+  
+  filename = 'fig10_aftereffects_multiple_regressions'
+  if (target=='svg') {
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
+  }
+  if (target=='pdf') {
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+  }
+  
+  layout(mat=matrix(c(1:2),ncol=2,byrow=TRUE))
+  par(mar=c(4.5, 4.5, 0.5, 0.5))
+  
+  models        <- predictAftereffects()
+  df            <- models$data
+  active.model  <- models$active.model
+  passive.model <- models$passive.model
+  
+  ALc <- active.model$coefficients
+  PLc <- passive.model$coefficients
+  
+  ALpred <- ALc[1] + (df$activelocalization_shift  * ALc[2]) + (df$aligned_activelocalization_sd  * ALc[3])
+  PLpred <- PLc[1] + (df$passivelocalization_shift * PLc[2]) + (df$aligned_passivelocalization_sd * PLc[3])
+  
+  colors <- getColors()
+  
+  xlim <- c(-5,35)
+  ylim <- c(-5,35)
+  
+  plot(x=-1000, y=-1000,
+       main='',xlab='',ylab='',
+       xlim=xlim, ylim=ylim,
+       bty='n',ax=F)
+  
+  title(xlab='predicted aftereffects [°]\nactive localization sd & shift',line=3)
+  title(ylab='aftereffects [°]',line=2)
+  
+  
+  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+  lines(x=xlim,y=xlim,col='#999999',lty=2)
+  
+  x = df$exclusion
+  y = ALpred
+  col = colors[3]
+  
+  # active color = 3
+  add_OLS_regression(x = x,
+                     y = y,
+                     col=col)
+  
+  if (add_info) {
+    
+    # collect the info:
+    N <- length(x)
+    
+    # also: adjusted R-squared and p-value?
+    linmod <- lm(y ~ x)
+    slope <- coef(linmod)[2]
+    Rsquared <- summary(linmod)$adj.r.squared
+    f <- summary(linmod)$fstatistic
+    p <- pf(f[1],f[2],f[3],lower.tail=F)
+    attributes(p) <- NULL
+    
+    if (p < .001) {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
+    } else {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
+    }
+    
+    text(x=xlim[1],
+         y=ylim[2],
+         labels=labels,
+         adj=c(0,1),
+         col=col)
+    
+  }
+  
+  
+  axis(side=1,at=seq(-5,35,10))
+  axis(side=2,at=seq(-5,35,10))
+  
+  
+  plot(x=-1000, y=-1000,
+       main='',xlab='',ylab='',
+       xlim=xlim, ylim=ylim,
+       bty='n',ax=F)
+  
+  title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
+  title(ylab='aftereffects [°]',line=2)
+  
+  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+  lines(x=xlim,y=xlim,col='#999999',lty=2)
+  
+  x = df$exclusion
+  y = PLpred
+  col = colors[4]
+  
+  # passive color = 4
+  add_OLS_regression(x = x,
+                     y = y,
+                     col = col)
+  
+  if (add_info) {
+    
+    # collect the info:
+    N <- length(x)
+    
+    # also: adjusted R-squared and p-value?
+    linmod <- lm(y ~ x)
+    slope <- coef(linmod)[2]
+    Rsquared <- summary(linmod)$adj.r.squared
+    f <- summary(linmod)$fstatistic
+    p <- pf(f[1],f[2],f[3],lower.tail=F)
+    attributes(p) <- NULL
+    
+    if (p < .001) {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
+    } else {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
+    }
+    
+    text(x=xlim[1],
+         y=ylim[2],
+         labels=labels,
+         adj=c(0,1),
+         col=col)
+    
+  }
+  
+  
+  axis(side=1,at=seq(-5,35,10))
+  axis(side=2,at=seq(-5,35,10))
+  
+  if (target %in% c('pdf','svg')) {
+    dev.off()
+  }
+  
+}
+
+
 
 # color utilities -----
 
