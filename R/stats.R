@@ -4,6 +4,7 @@ library(reshape2)
 library(afex)
 library(BayesFactor)
 
+# variance comparisons -----
 
 getDF4stats <- function(groups='all',variables=c('aligned_training_sd', 'aligned_nocursor_sd')) {
   
@@ -81,6 +82,175 @@ baselineVarianceTests <- function() {
   
 }
 
+
+baselineVarianceFollowUps <- function() {
+  
+  variables <- c('aligned_nocursor_sd',
+                 'aligned_training_sd',
+                 'aligned_activelocalization_sd',
+                 'aligned_passivelocalization_sd')
+  
+  df      <- getDF4stats(groups    = 'all',
+                         variables = variables)
+  
+  # df$age <- 'younger'
+  # df$age[which(df$group %in% c('older_control', 'older_instructed'))] <- 'older'
+  # df$age <- as.factor(df$age)
+  
+  df$variable <- as.factor(df$variable)
+  
+  # BFvals <- matrix(data=NA, nrow=length(variables), ncol=length(variables))
+  
+  for (idx1 in c(1:(length(variables)-1))) {
+    for (idx2 in c((idx1+1):length(variables))) {
+      var1 <- variables[idx1]
+      var2 <- variables[idx2]
+      cat(sprintf('= = = = = = = = =\ncompare %s with %s:\n',toupper(var1),toupper(var2)))
+      var1vals <- df$value[which(df$variable == var1)]
+      var2vals <- df$value[which(df$variable == var2)]
+      bt <- BayesFactor::ttestBF(var1vals, var2vals, paired=TRUE)
+      bt_e <- BayesFactor::extractBF( bt )
+      cat( sprintf('BF: %0.4f\n',bt_e$bf ) )
+      # BFvals[idx1,idx2] <- bt_e$bf 
+      cat('\n')
+    }
+  }
+  
+  # colnames( BFvals ) <- variables
+  # rownames( BFvals ) <- variables
+  
+  # print(BFvals)
+  
+}
+
+# localizationMLEcomparison <- function() {
+#   
+#   df <- read.csv('data/descriptors.csv', stringsAsFactors = FALSE)
+# 
+#   d <- df$aligned_passivelocalization_sd > df$aligned_activelocalization_sd
+#   
+#   # what is the hypothesized probability of success?
+#   # default is 50%... but that's pretty low
+#   # if we'd want this to work on individual participants, 95% seems like a fair low bar
+#   
+#   binom.test(x=sum(d), n=length(d), p=0.50, alternative = "greater")
+#   
+# }
+
+# reverse Maximum Likelihood Estimate -----
+
+MLE_weights <- function(FUN=mean) {
+  
+  df <- read.csv('data/descriptors.csv', stringsAsFactors = FALSE)
+  
+  sig2_ae <- FUN(df$aligned_activelocalization_sd)^2
+  sig2_a  <- FUN(df$aligned_passivelocalization_sd)^2
+  
+  sig2_e <- -sig2_ae * (sig2_a / (sig2_ae-sig2_a))
+  
+  w_a <- (1/sig2_a) / ((1/sig2_a) + (1/sig2_e))
+  w_e <- (1/sig2_e) / ((1/sig2_a) + (1/sig2_e))
+  
+  return(data.frame('variable' = c('sig2_ae', 'sig2_a', 'sig2_e', 'w_a', 'w_e'),
+                    'value'    = c( sig2_ae,   sig2_a,   sig2_e,   w_a,   w_e)))
+  
+}
+
+# multiple regressions on aftereffects -----
+
+predictAftereffects <- function(trace=0) {
+  
+  # this is not the data set we are looking for:
+  # df4 <- getDF4stats(groups    = c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control"),
+  #                    variables = c('aligned_activelocalization_sd', 'aligned_passivelocalization_sd', 'exclusion', 'activelocalization_shift', 'passivelocalization_shift'))
+  
+  # get our data set:
+  df <- read.csv('data/descriptors.csv', stringsAsFactors = FALSE)
+  # remove the 'org' groups, since they don't have a rotated phase:
+  df <- df[which(df$group %in% c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control")),]
+  
+  # demo_df <- df[,c('group', 'participant')]
+  # now keep only the columns we're interested in:
+  df <- df[,c('group', 'participant', 'exclusion','aligned_activelocalization_sd', 'aligned_passivelocalization_sd', 'activelocalization_shift', 'passivelocalization_shift')]
+  
+  # cat('########## predict aftereffects from ACTIVE localization:\n\n')
+  active.model <- step(lm(exclusion ~ activelocalization_shift + aligned_activelocalization_sd, data=df),
+                       direction='both',
+                       trace=trace)
+  # print(summary(active.model))
+  # cat('########## predict aftereffects from PASSIVE localization:\n\n')
+  passive.model <- step(lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd, data=df),
+                        direction='both',
+                        trace=trace)
+  # print(summary(passive.model))
+
+  # this gives somewhat weird results: it keeps 1 of the shifts, and one of the sds... but I suppose the two shifts and the two sds share a lot of variance, so this should have been expected?
+  # passive.model <- step(lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd + activelocalization_shift + aligned_activelocalization_sd, data=df),
+  #                       direction='both')
+  # 
+  
+  if (trace == 0) {
+    return(list('data'=df,
+                'active.model'=active.model,
+                'passive.model'=passive.model))
+  }
+  
+}
+
+
+
+AIC <- function(MSE, k, N) {
+  return( (N * log(MSE)) + (2 * k) )
+}
+
+AICc <- function(MSE, k, N) {
+  return( AIC(MSE, k, N) * (((2*k^2) + 2*k) / (N - k - 1)) )
+}
+
+relativeLikelihood <- function(crit) {
+  return( exp( ( min( crit  ) - crit  ) / 2 ) )
+}
+
+compareAftereffectPredictions <- function() {
+  
+  models <- predictAftereffects()
+  active.model <- models$active.model
+  passive.model <- models$passive.model
+  
+  # cat('AIC comparison\nof multiple regression models predicting aftereffects\nwith localization variance and shift:\n\n')
+  AICs <- c('active'=active.model$anova$AIC, 'passive'=passive.model$anova$AIC)
+  
+  restab <- matrix(NA, ncol=2, nrow=2)
+  restab[,1] <- AICs
+  restab[,2] <- relativeLikelihood(AICs)
+  row.names(restab) <- names(AICs)
+  colnames(restab) <- c('AIC','p')
+  print(as.data.frame(restab))
+  
+}
+
+sharedVariance <- function() {
+  
+  models <- predictAftereffects()
+  df <- models$data
+  # usdm::vif(df[,c(4:7)])
+  
+  y <- df$exclusion
+  
+  vars <- c('aligned_activelocalization_sd', 'aligned_passivelocalization_sd', 'activelocalization_shift', 'passivelocalization_shift')
+  for (var1 in c(1:(length(vars)-1))) {
+    for (var2 in c((var1+1):length(vars))) {
+      
+      x1 <- df[,vars[var1]]
+      x2 <- df[,vars[var2]]
+      VS <- car::vif(lm(y ~ x1 + x2))[1]
+      cat(sprintf('%s, %s: VIF = %0.3f\n',vars[var1],vars[var2],VS))
+
+    }
+  }  
+}
+
+# old code ------
 
 stats4_sd_distributions <- function() {
   
