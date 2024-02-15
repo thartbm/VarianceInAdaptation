@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Variance in movements has sometimes been seen as a measure of exploration, which is thought to support motor adaptation. For example, people with larger movement variability may adapt to a perturbation quicker.
+Variance in movements has sometimes been seen as a measure of exploration, which is thought to support motor adaptation. For example, people with larger movement variability may adapt to a perturbation quicker. The idea is that people who explore more, find the correct solution faster (goole terms: "exploration - exploitation").
 
 Similarly, if localization of an unseen hand after an outward reach depends on proprioception, and this sensory signal may be recalibrated, then a maximum likelihood approach would predict that people with less reliable (i.e. more variable) proprioception, recalibrated proprioception to a larger degree.
 
@@ -39,10 +39,11 @@ source('R/util.R')
 source('R/data.R')
 # make plots/figures:
 source('R/figures.R')
+# do statistics:
+source('R/stats.R')
 # extra crappy things:
 source('R/try_out.R')
 ```
-
 
 Now we are ready to download the full data set:
 
@@ -143,136 +144,171 @@ As a final preparation we get a file with descriptors for several measurements f
 # getAllDescriptors()
 ```
 
-# Before adaptation
+# Aligned phase
 
-What is the variance in all these measures?
+What is the variance in all these measures? We look at variance in training trials, no-cursor trials, and in active and passive localization. And these 4, we split by age as well.
 
-First, we look at reaches with and without feedback:
+## Variance measures
 
-1. reach training variability
-2. open-loop reach variability
-3. relation
+Let's first see the data:
 
-```{r baseline_reach_variability, fig.width=8, fig.height=4}
-
-plotBaselineVariability(groups='all',
-                        x='training',
-                        y='nocursor')
-
+```{r fig.height=4, fig.width=8}
+fig4_sd_distributions()
 ```
 
+The variance (or standard deviation, really) is higher in no-cursor trials it seems. At first sight, there doesn't appear to be any other effect. Let's test this with a Bayesian ANOVA.
 
-Then, we look at active and passive hand localization:
+## Variance statistics
 
-4. active hand localization variability
-5. passive hand localization variability
-6. relation
-
-```{r baseline_localization_variability, fig.width=8, fig.height=4}
-
-plotBaselineVariability(groups='all',
-                        x='activelocalization',
-                        y='passivelocalization')
-
+```{r}
+baselineVarianceTests()
 ```
 
+So the model fits better when the factor `variable` (the measures of variance) is included (BF_10=6.83e+15). There is no real evidence one way or another for the factor `age` (BF_10=0.421). But the model is equally good whether or not the interaction is included (BF_10=0.188).
 
-# After adaptation
+## Variance follow-ups
 
-## Predicting localization shifts
+In the figure it was clear that no-cursors had higher variance than the other types of trials. Let's see which variables have different variance from each other.
 
-If the sensory modality with the larger uncertainty is the one that gets recalibrated the most, then does it also make sense that people with larger localization variance recalibrate proprioception more?
-
-If so, we ask: does higher variance in hand localization relate to larger or smaller shifts in hand localization after training?
-
-Is this different for active or passive localization? Or should we be looking at the difference?
-
-```{r localization_shifts}
-plotPredictedAdaptation(IVs=c('activelocalization_sd',   'passivelocalization_sd'),
-                        DVs=c('activelocalization_shift','passivelocalization_shift'),
-                        groups=c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control") )
+```{r}
+baselineVarianceFollowUps()
 ```
 
+Indeed there is very good evidence that no-cursor trials have higher variance than the other 3 types of reaches. There is also evidence that the variance in reach training trials is equal to that in the two types of localization trials. Note: localization is less noisy than no-cursor reaches, and it's spread is very comparable with the spread of regular training reaches.
+
+Finally, there is evidence that there is a difference in the amount of variance in the two types of localization trials. Given the large number of participants, however, that last effect might not be as big or meaningful as expected. We'll look into this some more next.
+
+## Maximum Likelihood Estimate?
+
+*If* active hand localization can use both afferent and efferent signals to determine where the hand is, whereas passive hand localization can only use afferent signals, *and if* efferent and afferent signals are combined in a Bayes optimal way (e.g. as a Maximum Likelihood Estimate or MLE) *then* the variance in passive localization should be larger than in active localization. Let's plot this. Since there was no effect of age, we pool all participants.
+
+```{r fig.height=5, fig.width=5}
+fig6_efferent_localization()
+```
+
+Data points above the identity line are participants where the variance (sd) in passive localization is larger than in active localization, and those would be in line with an MLE or Bayes optimal integration account of afferent and efferent signals in these tasks. While there are a lot of data points that are in line with an MLE-like account (159/270 = 58.8%), there are also a lot of participants with data points that go against an MLE account (111/270 = 41.1%). On average the standard deviation in passive localization is 0.3 degrees larger than that in active localization, and this difference is significant (t(269)=4.07, p\<.001, $BF_{10}$= 197.1). However, if we'd want to do "reverse MLE", in order to get an estimate of the contribution of efferent signals, this would require all data to have the property that variance is higher in passive as compared to active localization, which is not the case. This argues against a straightforward Bayes-optimal integration of efferent and afferent signals in hand localization as measured here.
+
+Rather than throw out nearly half of participants where this does not work, we can try a "reverse MLE" on the group averages, to get an idea of how much efferent signals contribute to hand localization in our population overall. We'll calculate the weights only, for now, based on the aligned session. The biases are roughly zero there, so that estimating the size of an aligned signal based on two aligned measurements will be dominated by noise. However, we could try later on to do the same with rotated data, where the estimates are not around zero.
+
+## Estimating the importance of efferent signals
+
+First, the variance of the combined signals (in active localization), would be related to the variance from proprioception alone (or passive localization) and that of the efferent signals (not measures). Taken from Ernst & Banks (2002):
+
+$\sigma^2_{ae} = \frac{\sigma^2_a\cdot\sigma^2_e}{\sigma^2_a + \sigma^2_e}$
+
+We measured $\sigma^2_{ae}$ and $\sigma^2_a$ in active localization (afferent and efferent) and passive localization (afferent only), but don't know $\sigma^2_e$, the variance of the efferent signal.
+
+We can rewrite the equation to get the variance of the efferent signal as:
+
+$\sigma^2_{e}=-\sigma^2_{ae}\cdot\frac{\sigma^2_{a}}{\sigma^2_{ae}-\sigma^2_a}$
+
+And the mean of the combined signal is the weighted sum of the means of the contributing signals, where the weights are:
+
+$w_i=\frac{1/\sigma^2_i}{\sum_{j=1}^{n}1/\sigma^2_j}$
+
+We will not estimate any means (they're likely close to 0 anyway), but we can estimate the relative contributions (importance) of afferent and efferent signals to hand localization, by calculating the weights. Since this will not work in 41.1% of participants, we do this for the sample as a whole instead.
+
+As an approximation, we use the squared average standard deviation as the variance, and use that to estimate the relative weights of efferent and afferent signals in hand localization:
+
+```{r}
+knitr::kable(MLE_weights())
+```
+
+(The first two values are from the data, the rest is calculated using that data and the equations above.)
+
+That is, 91.36% afferent signal versus 8.64% efferent signal in the combined signal. If MLE is indeed the mechanism. We'll revisit this later in the section on data from the rotated session, but for now, this looks like a rather small contribution from efferent signals to hand localization, which means that afferent signals (which we usually call "proprioception") are very important for estimating where our hand is.
+
+------------------------------------------------------------------------
+
+As a different point, the purple line in the plot is an orthogonal distance regression (or PCA-based regression) that does not assume any directionality of the relationship (as opposed to a regular regression). With a slope close to 1, and a fairly high $R^2$, the relationship between the two types of localization, shows that either one could predict the other and probably that the participants are relatively reliable in how they perform the experiments.
+
+One thing to keep in mind is that localization is performed after the movement has been completed, and the efferent signal might have a bigger influence during the movement than after. So while this data shows no evidence of integration of efferent and afferent signals (Bayes / MLE style) that could be because it is particularly hard to measure the effect of efferent signals on hand localization.
+
+That said, we're also interested in if and how the variance in the other variables relate to each other.
+
+```{r other_variance_relations, fig.width=8, fig.height=4.5}
+fig5_variance_relations()
+```
+
+There could be a weak relationship between noise in training reaches, and noise in no-cursor reaches (ODR: $R^2$=0.22), but the data fans out from the origin (clear heteroscadasticity). There is a floor effect, of course, and this could drive part of that relationship.
+
+While there should be a similar floor effect in the measures of localization,the relationship between each of the types of reaches (training, no-cursor) and each type of lcoalization (active, passive) is even weaker (ODR: all $R^2$ \< 0.09). Nevertheless, the relationship between variance in no-cursor reaches and in training reaches is not very convincing.
+
+# Rotated phase
 
 ## Predicting adaptation rate
 
-Here we explore the exploration-exploitation hypothesis: people with more reach variance learn/adapt faster because they can exploit what they learn during this exploration.
+Here we test the exploration-exploitation hypothesis: people with more reach variance learn/adapt faster because they can exploit what they learn during this exploration. Despite some good evidence that this hypothesis does not apply to motor adaptation (Wei / Kording / etal) the idea keeps popping up. Since we have a fairly large data set, we should be able to test this.
 
-Is the speed of adaptation related to any of the baseline reach variance measures?
+Question: Is the speed of adaptation related to any of the baseline reach variance measures?
 
-```{r adaptation_rate}
+To answer this question, we fit a single exponential learning curve to the data:
 
-plotPredictedAdaptation(IVs=c('training_sd',  'nocursor_sd',   'training_sd',        'nocursor_sd'),
-                        DVs=c('training_rate','training_rate', 'training_asymptote', 'training_asymptote'),
-                        groups=c('control','EDS','EDSmatch','older_control','cursorjump'))
+$X_{t1} = X_{t0} - L(A - X_{t0})$
+
+This function has two free parameters: a learning rate L and an asymptote A. The learning rate is restricted to the range [0,1]. and the asymptotic level is restricted to $max(reach deviation) \cdot [-1,2]$  Both of these parameters (learning rate and asymptote) might increase with higher baseline variance. We use a grid search, take the parameters that result in the X lowest mean squared errors (MSEs) and use those as the starting point for an optimization procedure that minimizes the MSE further. From those we take the parameters resulting in the lowest MSE, and use those. This is repeated for all suitable participants.
+
+We do not include the pilot groups (no rotated phase), groups that received instructions (inflated learning rates) or groups that did 60 degree rotations (different asymptotes). This leaves data from 118 participants.
+
+First, we plot the data, and here we test if the rate and asymptote of adaptation can be predicted by any of the four measures of variance we got from the aligned phase of the experiment.
+
+```{r predict_adaptation, fig.width=8, fig.height=4.5}
+fig7_variance2_learning()
+```
+The scatter plot does not show any clear relationship between any pair of variables. And neither the adaptation rate, nor the asymptote can be predicted from any of the four measures of variance by means of linear regression.
 
 
+## Predicting implicit changes
+
+There might be some relationship between proprioceptive recalibration and implicit motor adaptation (measured here as localization shifts and exclude strategy reach aftereffects). Both presumably tap into implicit processes. This relationship was present in one earlier paper (CRessman & Henriques, 20210) based on estimates of proprioceptive recalibration using 2-AFC methods with 50+ trial staircases. However, the same method failed to re-produce this in other work (e.g. Salomonczyk et al, 2011; Barkley et al., 2014). Perhaps the duration of the measurement watered down any relationship. We did see that the size of (presumably implicit) rebounds is related to both active and passive hand localization shifts (Ruttle et al., 2021) where the measurement of a single data point takes only 1 trial. We did see it in two papers based on part of the data we use here as well (Gastrock et al., 2020; Modchalingam et al., 2019), which also uses single-trial measurements, so it should not be surprising that we can reproduce this effect here.
+
+```{r fig.width=6, fig.height=3}
+fig9_localizationShift2_implicit()
 ```
 
+Here we first test if the changes can be predicted by the variance in aligned localization. The idea is that if hand localization shifts are a perceptual change, and maximum likelihood approaches to cue integration would still have some  relevance here, then perceptual processes with higher variance should shift more. That is: participants with higher variance in hand localization should have higher localization shifts. And if localization shifts are part of reach aftereffects, then participants with higher localization variances should also have higher aftereffects.
 
-## Predicting adaptation asymptote
+Let's plot this:
 
-Maybe it's not the rate of change that is predicted, but the asymptote: how much you learn or adapt?
-
-Is the amount of adaptation related to any of the baseline variance measures?
-
-(Plotted above: bottom row.)
-
-## Predicting reach aftereffects
-
-Are with/without strategy reach aftereffects related to any of the baseline variance measures? (In particular variance in baseline no-cursor reach deviations.)
-
-```{r RAE_predictors}
-plotPredictedAdaptation(IVs=c('training_sd', 'nocursor_sd', 'training_sd', 'nocursor_sd'),
-                        DVs=c('exclusion',   'exclusion',   'inclusion',   'inclusion'),
-                        groups=c('control','EDS','EDSmatch','older_control','cursorjump'))
+```{r locvar_2_implicit, fig.width=6, fig.height=5}
+fig8_localizationSD2_implicit()
 ```
 
+While aftereffects can be predicted from variance in aligned localization (though not fully), localization shifts can not be predicted from aligned localization variance. These are somewhat contradictory properties of the data, that are not in line with the idea that unreliable processes should be adapted more.
 
-# Demographics
+# What predicts implicit aftereffects?
 
-Here we could look at effects of age, sex and other demographics.
+We've seen above that aftereffects are related to localization shift (replicated from earlier work) and also that aftereffects can be somewhat predicted from localization variance (planned analysis). Those could be two predictors of aftereffects. At first glance, one might think that those two predictors should explain the same part of variance of the dependent variable (i.e. have a high VIF). However, the two are not related to each other. That means they might predict different parts of aftereffects, and we can test this with a multiple regression approach.
 
-## Variability in Localization and Sex
+First, we check if there is any overlap in explained variance between the 4 possible predictor variables.
 
-This is the effect of sex on aligned localization variability. We only look at people who self-identified their biological sex as male or female:
-
-```{r variability_sex}
-plotBaselineVariabilitySex()
-```
-There is some evidence that biases in reaching depend on sex, so we might also want to test that.
-
-# Try out plots
-
-Here are some things I was apparently trying out.
-
-## Decay of Localization Bias
-
-Decay of localization biases across the 18 trials of each rotated block. There might be a break point between trials 9 and 10, as each participant only does the first or second half as active or passive localization.
-
-```{r localization_decay_plot}
-plotLocalizationDecay()
+```{r}
+sharedVariance()
 ```
 
-To check: only for active localization, early on in the rotated session is there some form of decay. Later on it stabilizes. Does it stabilize at the same point as where passive localization is?
+We see that VIF's well over 1, occur in two instances: between the two measures of variance as well as between the two shifts. This means there are in principle 4 models based on two predictors, but we'll restrict this to the models that use only 1 kind of localization:
 
-## Decay of Reach Aftereffects
+- active localization SD & shift
+- passive localization SD & shift
 
-Decay of reach aftereffects across the 18 trials of each rotated no-cursor block. These are only groups/conditions with normal feedback, a 30 degree rotation and without instructions about the rotation (4 groups: 'control', 'older_control', 'EDS' and 'EDSmatch'). This figure/data set is split by Exclude first and Include first, but each row of panels in the figures is based on the same subset of participants, and each participant only contributes to 1 row of panels.
+We run two multiple regression optimizers (AIC based), starting with the full model (2 predictors) and seeing if any predictors can be removed to improve the model.
 
-```{r RAE_decay_plot}
-plotRAEdecay()
+```{r}
+predictAftereffects(trace=1)
 ```
 
-There might be some subtle differences, e.g., include strategy reach aftereffects are higher than exclude strategy reach aftereffects in blocks where you start with include strategy no-cursor trials.
+That is, when starting the multiple regression with both the standard deviation and the shift (of either active or passive localization) no removal of either of the two predictors makes the model any better.
 
-# No-cursors predicted by variance in proprioception
+We can see if one of the two models predicts aftereffects better than the other. For this, we use AIC-based log-likelihoods:
 
-Is variance in no-cursor reaches predicted by localization?
-
-```{r nocursorsd_propsd}
-plotPredictedAdaptation(IVs=c('activelocalization_sd', 'passivelocalization_sd'),
-                        DVs=c('aligned_nocursor_sd',   'aligned_nocursor_sd'),
-                        groups=c("handview", "instructed60", "older_instructed", "control60", "EDSmatch", "instructed", "cursorjump", "EDS", "control", "older_control") )
+```{r}
+compareAftereffectPredictions()
 ```
 
+Interestingly, passive localization (without efferent information) is better than active localization in predicting exclude strategy reach aftereffects. But not significantly so (p=0.503). Both models work roughly equally well, so we plot both here:
+
+```{r multiple_regression, fig.width=8, fig.height=4}
+fig10_multiple_regressions()
+```
+
+Both models explain a roughly the same, decent portion of the variance, but there are clearly other processes involved in reach aftereffects.
