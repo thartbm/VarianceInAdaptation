@@ -285,9 +285,11 @@ fig7_variance2_learning <- function(target='inline') {
 fig8_localizationSD2_implicit <- function(target='inline') {
   
   var_pairs <- list( 
+    c('aligned_training_sd', 'exclusion'),
     c('aligned_activelocalization_sd', 'exclusion'),
-    c('aligned_passivelocalization_sd','exclusion'),
     c('aligned_activelocalization_sd', 'activelocalization_shift'),
+    c('aligned_nocursor_sd','exclusion'),
+    c('aligned_passivelocalization_sd','exclusion'),
     c('aligned_passivelocalization_sd','passivelocalization_shift')
   )
   
@@ -296,12 +298,14 @@ fig8_localizationSD2_implicit <- function(target='inline') {
   limits <- list( c(0,20), c(-5,35),
                   c(0,20), c(-5,35),
                   c(0,20), c(10,-20),
+                  c(0,20), c(-5,35),
+                  c(0,20), c(-5,35),
                   c(0,20), c(10,-20)   )
   
   figX_scatters(target=target,
                 var_pairs=var_pairs,
                 filename='Fig8_localizationvar_2_implicit',
-                col_idx=c(3,4,3,4),
+                col_idx=c(1,3,3,2,4,4),
                 pch=1,
                 lim=limits,
                 identity=FALSE,
@@ -928,6 +932,165 @@ fig10_multiple_regressions <- function(target='inline', add_info=TRUE) {
 }
 
 
+fig0_localizationProperties <- function(target='inline') {
+  
+  filename <- 'Fig0_localization_distribution'
+  width=6
+  height=8
+  
+  if (target=='svg') {
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
+  }
+  if (target=='pdf') {
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+  }
+  
+  lablines=2.5
+  par(mar=c(3.6, 3.6, 0.25, 2))
+  layout(mat=matrix(c(1:8), byrow=TRUE, ncol=2), width=c(2,3))
+  
+  # project colors
+  colors <- getColors()
+  
+  # split data into 4 subsets:
+  l <- getAlignedLocalization()
+  older   <- c("older_instructed", 
+               "older_control")
+  younger <- c("handview",
+               "instructed60",
+               "org_instructed",
+               "control60",
+               "EDSmatch",
+               "org_control60",
+               "instructed",
+               "org_control",
+               "cursorjump",
+               "EDS",
+               "control",
+               "org_instructed60")
+  
+  l1 <- l[which(l$task == 'activelocalization' & l$group %in% younger),]
+  l2 <- l[which(l$task == 'passivelocalization' & l$group %in% younger),]
+  
+  l3 <- l[which(l$task == 'activelocalization' & l$group %in% older),]
+  l4 <- l[which(l$task == 'passivelocalization' & l$group %in% older),]
+  
+  ls <- list(l1, l2, l3, l4)
+  
+  
+  
+  for (l.idx in c(1:length(ls))) {
+    
+    l <- ls[[l.idx]]
+    
+    lcol <- colors[c(3,4,7,8)[l.idx]]
+    
+    colpal <- c()
+    for (balance in seq(0,1,length=64)) {
+      colpal <- c(colpal, Reach::colorMix(a='#ffffff', b=lcol, balance = c(1-balance, balance)))
+    }
+    
+    
+    # dist2d <- hist2D(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-13,13,0,13))
+    # nsamples <- sum(dist2d$z)
+    
+    dist2d <- MASS::kde2d(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-14,14,-0.5,14), h=1)
+    nsamples <- dim(l)[1]
+    
+    image(dist2d, col=colpal, asp=1, xlim=c(-15,15), ylim=c(-0.5,17), ax=FALSE, bty='n')
+    
+    
+    a <- (c(0:180) / 180) * pi
+    lines(x=cos(a)*12,
+          y=sin(a)*12,
+          col='black',
+          lty=3)
+    lines(x=c(-12,12),y=c(0,0),col='black',lty=3)
+    a = (c(45,90,135)/180)*pi
+    for (aa in a) {
+      lines(x=c(0,cos(aa)*12),
+            y=c(0,sin(aa)*12),
+            col='black',
+            lty=3)
+    }
+    ta <- c(0,45,90,135,180)
+    text(x=cos((ta/180)*pi)*14,
+         y=sin((ta/180)*pi)*14,
+         labels=sprintf('%d°',ta),
+         xpd=TRUE)
+    
+    
+    # axis(side=1, at=c(-12,-6,0,6,12))
+    # axis(side=2, at=c(       0,6,12))
+    
+    title(main=c('younger\nactive localization',
+                 'younger\npassive localization',
+                 'older\nactive localization',
+                 'older\npassive localization')[l.idx], 
+          line=-2, 
+          xpd=TRUE,
+          cex.main=1,
+          font.main=1)
+    # title(xlab='x [cm]',line=lablines)
+    # title(ylab='y [cm]',line=lablines)
+    title(xlab=sprintf('(%d samples)', nsamples ), line=-1)
+    
+    plot(-1000,-1000,
+         xlim=c(30,150),ylim=c(-40,40),
+         asp=1,
+         main='',xlab='',ylab='',
+         ax=FALSE, bty='n')
+    
+    lines(x=c(30,150),y=c(0,0),lty=2,col='#999999')
+    
+    acol <- setColorAlpha(col=lcol, alpha=c(8,8,24,24)[l.idx])
+    
+    participants <- unique(l$participant)
+    
+    
+    X <- c(40:140)
+    allpredspl <- matrix(data=NA,nrow=length(X),ncol=length(unique(l$participant)))
+    
+    for (ppno in c(1:length(participants))) {
+      
+      participant <- participants[ppno]
+      
+      # pdf <- l[which(l$participant == participant),]
+      pdf <- cleanLocalization(l[which(l$participant == participant),])
+      locspl <- getSpline(pdf)
+      hr <- range(pdf$targetangle_deg)
+      psp <- predict(locspl, x=seq(min(hr), max(hr), length=50))
+      lines(psp, col=acol)
+      
+      intpredspl <- predict(locspl, x=X[which(X > hr[1] & X < hr[2])])
+      allpredspl[intpredspl$x-(min(X)-1),ppno] <- intpredspl$y
+    }
+    
+    title(xlab='hand movement direction [°]',line=lablines)
+    title(ylab='localization error [°]',line=lablines)
+    
+    axis(side=1, at=c(30,60,90,120,150))
+    axis(side=2, at=c(-30,0,30))
+    
+    CI95 <- apply(allpredspl,MARGIN=1,FUN=Reach::getConfidenceInterval)
+    
+    polygon(x = c(X,rev(X)),
+            y = c(CI95[1,], rev(CI95[2,])),
+            border=FALSE,
+            col=setColorAlpha(col=lcol, alpha=48) )
+    
+    lines(x=X, 
+          y=rowMeans(allpredspl, na.rm=TRUE),
+          col=lcol)
+    
+  }
+  
+  if (target %in% c('svg','pdf')) {
+    dev.off()
+  }
+  
+}
+
 
 # color utilities -----
 
@@ -938,7 +1101,7 @@ getColors <- function(fmt='rgb', alpha=255) {
                 'yorkred'      = rgb(229,  22,  54, alpha, max = 255),     # this one should not change
                 'pink'         = rgb(207,   0, 216, alpha, max = 255), 
                 'purple'       = rgb(127,   0, 216, alpha, max = 255), 
-                'cobalt'       = rgb(  0,  71, 171, 255, max = 255),
+                'cobalt'       = rgb(  0,  71, 171, alpha, max = 255),
                 "neonblue"     = rgb( 46,  55, 254, alpha, max = 255),
                 "curious"      = rgb( 23, 131, 232, alpha, max = 255),
                 'turquoise'    = rgb(  0, 206, 209, alpha, max = 255)   )
