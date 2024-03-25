@@ -12,11 +12,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Variance in movements has sometimes been seen as a measure of exploration, which is thought to support motor adaptation. For example, people with larger movement variability may adapt to a perturbation quicker. The idea is that people who explore more, find the correct solution faster (goole terms: "exploration - exploitation").
+Variance in movements has sometimes been seen as a measure of exploration, which is thought to support motor adaptation. For example, people with larger movement variability may adapt to a perturbation quicker. The idea is that people who explore more, find the correct solution faster (google terms: "exploration - exploitation").
 
 Similarly, if localization of an unseen hand after an outward reach depends on proprioception, and this sensory signal may be recalibrated, then a maximum likelihood approach would predict that people with less reliable (i.e. more variable) proprioception, recalibrated proprioception to a larger degree.
 
-We have published four papers on related topics, that all use the same paradigm. Here we combine all this data to have a suitable data set to probe questions related to the role that variance has in adaptation processes. For some questions, we can include pilot data where no adaptation was recorded (i.e. only aligned sessions are available).
+We have published four papers on related topics, that all use the same (or a very similar) paradigm. Here we combine all this data to have a suitable data set to probe questions related to the role that variance has in adaptation processes. For some questions, we can include pilot data where no adaptation was recorded (i.e. only aligned sessions are available).
 
 We start by installing a package with generic functions for analyzing reach data.
 
@@ -148,6 +148,22 @@ As a final preparation we get a file with descriptors for several measurements f
 
 What is the variance in all these measures? We look at variance in training trials, no-cursor trials, and in active and passive localization. And these 4, we split by age as well.
 
+## Unbiased variance in reaches and localization
+
+For the training and no-cursor trials, we can calculate a bias for every target - assuming there are systematic biases depending on reach direction or location in the work space. We can then subtract those biases and determine an unbiased estimate of the standard deviation. We also subtract the biases obtained from aligned conditions and use those as a reference for the rotated conditions. So the approach for targeted reaches is to subtract the average bias for each target before determining the overall variance.
+
+Since localization reaches are made without a target, we can not use that exact approach for localization. But we can estimate the biases throughout the work space a different way: by fitting a smoothed spline, and use that as a function of bias across different angles. For every participant we base one spline on the aligned active localization trials and one on the aligned passive localization trials. These are used as estimates for both the aligned and rotated, active and passive localization. After subtracting the bias predicted by the spline on each trial from the localization response, we can determine an unbiased estimate of standard deviation, comparably unbiased to those of the no-cursor and training trials.
+
+We take a look at the accuracy of localization. On the left we show the distributions of localization responses across the workspace, showing that responses are mostly very close to the arc. On the right are the angular biases across the work space for all participants, as well as a 95% confidence interval and an average bias.
+
+```{r fig.width=6, fig.height=8}
+fig0_localizationProperties()
+```
+
+There is some variance in the angular accuracy across the work space between participants, which means it will really pay off to account for this, and get an unbiased estimate of standard deviation / variance. If anything, the older participants seem less biased then the younger participants.
+
+However, we don't do any statistics on any of this.
+
 ## Variance measures
 
 Let's first see the data:
@@ -176,7 +192,7 @@ baselineVarianceFollowUps()
 
 Indeed there is very good evidence that no-cursor trials have higher variance than the other 3 types of reaches. There is also evidence that the variance in reach training trials is equal to that in the two types of localization trials. Note: localization is less noisy than no-cursor reaches, and it's spread is very comparable with the spread of regular training reaches.
 
-Finally, there is evidence that there is a difference in the amount of variance in the two types of localization trials. Given the large number of participants, however, that last effect might not be as big or meaningful as expected. We'll look into this some more next.
+Finally, there is evidence that there is a difference in the amount of variance in the two types of localization trials ($BF_{10}=197.2$). Given the large number of participants, however, that last effect might not be as big or meaningful as expected. We'll look into this some more next.
 
 ## Maximum Likelihood Estimate?
 
@@ -192,11 +208,11 @@ Rather than throw out nearly half of participants where this does not work, we c
 
 ## Estimating the importance of efferent signals
 
-First, the variance of the combined signals (in active localization), would be related to the variance from proprioception alone (or passive localization) and that of the efferent signals (not measures). Taken from Ernst & Banks (2002):
+First, the variance of the combined signals (in active localization), would be related to the variance from proprioception alone (or passive localization) and that of the efferent signals (not measures). Based on Ernst & Banks (2002):
 
 $\sigma^2_{ae} = \frac{\sigma^2_a\cdot\sigma^2_e}{\sigma^2_a + \sigma^2_e}$
 
-We measured $\sigma^2_{ae}$ and $\sigma^2_a$ in active localization (afferent and efferent) and passive localization (afferent only), but don't know $\sigma^2_e$, the variance of the efferent signal.
+We measured $\sigma^2_{ae}$ (active localization: afferent & efferent) and $\sigma^2_a$ (passive localization: afferent only), but don't know $\sigma^2_e$, the variance of the efferent signal.
 
 We can rewrite the equation to get the variance of the efferent signal as:
 
@@ -206,7 +222,7 @@ And the mean of the combined signal is the weighted sum of the means of the cont
 
 $w_i=\frac{1/\sigma^2_i}{\sum_{j=1}^{n}1/\sigma^2_j}$
 
-We will not estimate any means (they're likely close to 0 anyway), but we can estimate the relative contributions (importance) of afferent and efferent signals to hand localization, by calculating the weights. Since this will not work in 41.1% of participants, we do this for the sample as a whole instead.
+We will not estimate any means (they're close to 0 anyway), but we can estimate the relative contributions (importance) of afferent and efferent signals to hand localization, by calculating the weights. Since this will not work in 41.1% of participants, we do this for the sample as a whole instead, using the average over all participants.
 
 As an approximation, we use the squared average standard deviation as the variance, and use that to estimate the relative weights of efferent and afferent signals in hand localization:
 
@@ -216,7 +232,7 @@ knitr::kable(MLE_weights())
 
 (The first two values are from the data, the rest is calculated using that data and the equations above.)
 
-That is, 91.36% afferent signal versus 8.64% efferent signal in the combined signal. If MLE is indeed the mechanism. We'll revisit this later in the section on data from the rotated session, but for now, this looks like a rather small contribution from efferent signals to hand localization, which means that afferent signals (which we usually call "proprioception") are very important for estimating where our hand is.
+That is, 91.36% afferent signal versus 8.64% efferent signal in the combined signal. If MLE is indeed the mechanism. For now, this looks like a rather small contribution from efferent signals to hand localization, which means that, in the absence of _any_ visual information, afferent signals (which we usually call "proprioception") are very important for estimating where our hand is.
 
 ------------------------------------------------------------------------
 
@@ -270,11 +286,11 @@ Here we first test if the changes can be predicted by the variance in aligned lo
 
 Let's plot this:
 
-```{r locvar_2_implicit, fig.width=6, fig.height=5}
+```{r locvar_2_implicit, fig.width=7.5, fig.height=5}
 fig8_localizationSD2_implicit()
 ```
 
-While aftereffects can be predicted from variance in aligned localization (though not fully), localization shifts can not be predicted from aligned localization variance. These are somewhat contradictory properties of the data, that are not in line with the idea that unreliable processes should be adapted more.
+While aftereffects can be predicted from variance in aligned localization (though not fully), they can not be predicted from aligned training or no-cursor variance, _and_ localization shifts can not be predicted from aligned localization variance. These are somewhat contradictory properties of the data, that are not in line with the idea that unreliable processes should be adapted more.
 
 # What predicts implicit aftereffects?
 
@@ -286,7 +302,7 @@ First, we check if there is any overlap in explained variance between the 4 poss
 sharedVariance()
 ```
 
-We see that VIF's well over 1, occur in two instances: between the two measures of variance as well as between the two shifts. This means there are in principle 4 models based on two predictors, but we'll restrict this to the models that use only 1 kind of localization:
+We see that VIF's well over 1 occur in two instances: between the two measures of variance as well as between the two shifts. This means there are in principle 4 models based on two predictors, but we'll restrict this to the models that use only 1 kind of localization:
 
 - active localization SD & shift
 - passive localization SD & shift
