@@ -275,7 +275,7 @@ readParticipantData <- function(participant=participant,
              'nocursor',
              'activelocalization',
              'passivelocalization')
-  
+
   file_list <- expand.grid(session=sessions,
                            task=tasks)
   
@@ -614,5 +614,119 @@ getAverageError <- function(schedule, task, df, do_abs=FALSE) {
   if (do_abs) {reachdevs <- abs(reachdevs)}
 
   return(mean(reachdevs))
+  
+}
+
+# NON-DESCRIPTORS -----
+
+# https://www.r-bloggers.com/2014/09/5-ways-to-do-2d-histograms-in-r/
+
+getAlignedLocalization <- function() {
+  
+  files <- read.csv('data/files.csv', stringsAsFactors = FALSE)
+  
+  files <- files[,c('participant','group')]
+  
+  localization <- do.call("rbind",apply(files,1,FUN=readParticipantLocalization))
+  
+  localization <- localization[which(localization$selected == 1),]
+  
+  return(localization)
+  
+}
+
+
+readParticipantLocalization <- function(params) {
+  
+  participant <- params['participant']
+  group <- params['group']
+  
+  tasks <- c('activelocalization',
+             'passivelocalization')
+  
+  data <- NA
+  
+  for (task in tasks) {
+    
+    filename <- sprintf('data/%s/%s/%s_aligned_%s.csv',group,participant,participant,task)
+    df <- read.csv(filename, stringsAsFactors = FALSE)
+    df$participant <- participant
+    df$group <- group
+    df$task <- task
+
+    if (is.data.frame(data)) {
+      data <- rbind(data, df)
+    } else {
+      data <- df
+    }
+    
+  }
+  
+  return(data)
+  
+}
+
+hist2D <- function(x, y, n=25, lims=NULL) {
+  
+  if (is.null(lims)) {
+    xmin <- floor(min(x))
+    xmax <- ceiling(max(x))
+    ymin <- floor(min(y))
+    ymax <- ceiling(max(y))
+  } else {
+    xmin <- lims[1]
+    xmax <- lims[2]
+    ymin <- lims[3]
+    ymax <- lims[4]
+  }
+  
+  if (length(n) == 1) {
+    nx <- n
+    ny <- n
+  }
+  if (length(n) == 2) {
+    nx <- n[1]
+    ny <- n[2]
+  }
+  
+  
+  x.bin <- seq(xmin, xmax, length=nx)
+  y.bin <- seq(ymin, ymax, length=ny)
+  
+  x.bw <- (xmax-xmin)/(nx-1)
+  y.bw <- (ymax-ymin)/(ny-1)
+  
+  x.bin.edges <- seq(xmin-(x.bw/2), xmax+(x.bw/2), length=nx+1) # could calculate from x.bin as well...
+  y.bin.edges <- seq(ymin-(y.bw/2), ymax+(y.bw/2), length=ny+1)
+  
+  drop.idx <- unique( c( which(x < x.bin.edges[1]),
+                         which(x > x.bin.edges[nx+1]),
+                         which(y < y.bin.edges[1]),
+                         which(y > y.bin.edges[ny+1]) ) )
+  
+  x <- x[-drop.idx]
+  y <- y[-drop.idx]
+  
+  freq <-  as.data.frame(table(findInterval(x, x.bin.edges),findInterval(y, y.bin.edges)))
+  freq[,1] <- as.numeric(freq[,1])
+  freq[,2] <- as.numeric(freq[,2])
+  
+  freq2D <- matrix(0, nrow=nx, ncol=ny)
+  freq2D[cbind(freq[,1], freq[,2])] <- freq[,3]
+  
+  return(list('x'=x.bin, 'y'=y.bin, 'z'=freq2D))
+  
+}
+
+library(RColorBrewer)
+rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
+r <- rf(32)
+
+plotLocalizationDistribution <- function(df) {
+  
+  l <- getAlignedLocalization()
+  homebrew <- hist2D(x=l$handx_cm, y=l$handy_cm, n=c(40,20), lims=c(-13,13,0,13))
+  hist2d <- MASS::kde2d(x=localization$handx_cm, y=localization$handy_cm, n=c(100,50), lims=c(-13,13,0,13))
+
   
 }
