@@ -425,11 +425,46 @@ figX_scatters <- function(target='inline',
     height <- c(4,4,2.5,6,NA,5.0,NA,4 )[npanels]
   }
   
+  
+  
+  dpi = 300
+  
   if (target=='svg') {
-    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), 
+                     width=width, 
+                     height=height, 
+                     fix_text_size = FALSE)
   }
   if (target=='pdf') {
-    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), 
+              width=width, 
+              height=height)
+  }
+  
+  # NO semi-transparency
+  # if (target=='eps') {
+  #   setEPS()
+  #   postscript(file=sprintf('doc/%s.eps',filename), 
+  #              width=width, 
+  #              height=height)
+  #   
+  #   # additional arguments to "postscript()":
+  #   #  horizontal = FALSE, onefile = FALSE, paper = "special"
+  # }
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
   }
   
   par(mar=c(4.5, 4.5, 0.5, 0.5))
@@ -574,7 +609,7 @@ figX_scatters <- function(target='inline',
     
   }
   
-  if (target %in% c('pdf','svg')) {
+  if (target %in% c('pdf','svg','png','tiff','eps')) {
     dev.off()
   }
   

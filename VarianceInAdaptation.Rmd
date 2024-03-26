@@ -3,9 +3,9 @@ title: "Sensory and Motor Variance in Adaptation and Proprioceptive Recalibratio
 author: "Marius 't Hart"
 date: "20/11/2022"
 output:
-  word_document: default
-  pdf_document: default
   html_document: default
+  pdf_document: default
+  word_document: default
 ---
 
 ```{r setup_knitr, include=FALSE}
