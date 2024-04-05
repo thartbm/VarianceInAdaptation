@@ -144,6 +144,15 @@ As a final preparation we get a file with descriptors for several measurements f
 # getAllDescriptors()
 ```
 
+# Sample
+
+Here is the table with sources and numbers and age of participants in each task:
+
+```{r}
+knitr::kabel(demographicsTable())
+```
+
+
 # Aligned phase
 
 What is the variance in all these measures? We look at variance in training trials, no-cursor trials, and in active and passive localization. And these 4, we split by age as well.
