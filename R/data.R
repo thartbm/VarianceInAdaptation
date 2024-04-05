@@ -1,6 +1,84 @@
 
 `%notin%` <- function(x,y) !(x %in% y)
 
+# sample demographics -----
+
+demographicsTable <- function() {
+  
+  df <- read.csv('data/demographics.csv', stringsAsFactors = FALSE)
+  
+  groups <- list(c("control"), c("instructed"), c("control60"), c("instructed60"), c("older_control"), c("older_instructed"), c("cursorjump"), c("handview"), c("EDSmatch"), c("EDS"), c("org_control", "org_instructed", "org_control60", "org_instructed60"))
+
+  tasknames <- list("control"="30° – Non-instructed", 
+                    "instructed"="30° – Instructed", 
+                    "control60"="60° – Non-instructed", 
+                    "instructed60"="60° – Instructed", 
+                    "older_control"="Older – Non-instructed",
+                    "older_instructed"="Older – Instructed",
+                    "cursorjump"="Cursor Jump",
+                    "handview"="Hand View",
+                    "EDSmatch"="EDS controls",
+                    "EDS"="People with EDS", 
+                    "pilots"="Pilots (only aligned phase)")
+  
+  sources <- list("control"="Modchalingam et al., 2019", 
+                  "instructed"="Modchalingam et al., 2019", 
+                  "control60"="Modchalingam et al., 2019", 
+                  "instructed60"="Modchalingam et al., 2019", 
+                  "older_control"="Vachon et al., 2020",
+                  "older_instructed"="Vachon et al., 2020",
+                  "cursorjump"="Gastrock et al., 2020",
+                  "handview"="Gastrock et al., 2020",
+                  "EDSmatch"="Clayton et al., 2021",
+                  "EDS"="Clayton et al., 2021", 
+                  "pilots"="Pilot data (collected 2016-2017)")
+  
+  label  <- c()
+  task <- c()
+  N <- c()
+  age_cat <- c()
+  age_m_sd <- c()
+  source <- c()
+  
+  
+  for (group in groups) {
+    # store label, clumsily:
+    if (length(group) == 4) {
+      label <- c(label, 'pilots')
+    } else {
+      label <-c(label, group)
+    }
+    
+    # get relevant part of demographics data frame:
+    gdf <- df[which(df$group %in% group),]
+    
+    # store number of participants:
+    N <- c(N, dim(gdf)[1])
+    
+    # get the age category:
+    if (substr(group[1],1,5) == 'older') {
+      age_cat <- c(age_cat, 'older')
+    } else {
+      age_cat <- c(age_cat, 'younger')
+    }
+    
+    # get average + sd of age:
+    a <- gdf$age
+    age_m_sd <- c(age_m_sd, sprintf('%0.2f (%0.2f)',mean(a, na.rm=TRUE), sd(a, na.rm=TRUE)))
+    
+    source <- c(source, sources[[label[length(label)]]])
+    
+    task <- c(task, tasknames[[label[length(label)]]])
+    
+  }
+  
+  return(data.frame(label, task, N, age_cat, age_m_sd, source))
+  
+  
+}
+
+
+
 # ALL DESCRIPTORS -----
 
 getAllDescriptors <- function() {
