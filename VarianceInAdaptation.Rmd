@@ -16,7 +16,9 @@ Variance in movements has sometimes been seen as a measure of exploration, which
 
 Similarly, if localization of an unseen hand after an outward reach depends on proprioception, and this sensory signal may be recalibrated, then a maximum likelihood approach would predict that people with less reliable (i.e. more variable) proprioception, recalibrated proprioception to a larger degree.
 
-We have published four papers on related topics, that all use the same (or a very similar) paradigm. Here we combine all this data to have a suitable data set to probe questions related to the role that variance has in adaptation processes. For some questions, we can include pilot data where no adaptation was recorded (i.e. only aligned sessions are available).
+Here we combine the data from earlier studies to investigate the role of motor and proprioceptive variance in motor adaptation.
+
+These earlier studies were published in four papers, and all use the same paradigm - with minor differences. For some questions, we can include pilot data where no adaptation was recorded (i.e. only aligned sessions are available). This pilot data has not been published yet.
 
 We start by installing a package with generic functions for analyzing reach data.
 
@@ -138,20 +140,20 @@ sessions <- c('aligned')
 
 One participants seems to be missing a block of 9 trials from each of the 4 kinds of localization, but other than that, there are only one or two trials missing from each participant. This is workable data.
 
+# Sample
+
+Let's have a look at the sample of data and its sources.
+
+```{r}
+knitr::kable(demographicsTable())
+```
+
+
 As a final preparation we get a file with descriptors for several measurements for every participant. This also takes some time, but has to be done only once.
 
 ```{r get_descriptors_file}
 # getAllDescriptors()
 ```
-
-# Sample
-
-Here is the table with sources and numbers and age of participants in each task:
-
-```{r}
-knitr::kabel(demographicsTable())
-```
-
 
 # Aligned phase
 
@@ -159,9 +161,9 @@ What is the variance in all these measures? We look at variance in training tria
 
 ## Unbiased variance in reaches and localization
 
-For the training and no-cursor trials, we can calculate a bias for every target - assuming there are systematic biases depending on reach direction or location in the work space. We can then subtract those biases and determine an unbiased estimate of the standard deviation. We also subtract the biases obtained from aligned conditions and use those as a reference for the rotated conditions. So the approach for targeted reaches is to subtract the average bias for each target before determining the overall variance.
+For the training and no-cursor trials, we can calculate a bias for every target - assuming there are systematic biases depending on reach direction or location in the work space. We can then subtract those biases and determine an unbiased estimate of the standard deviation. We also subtract the biases obtained from aligned conditions and use those as a reference for the rotated conditions. So the approach for targeted reaches is fairly standard: subtract the average bias for each target before determining the overall variance. The goal is to account for direction dependent biases before calculating variance.
 
-Since localization reaches are made without a target, we can not use that exact approach for localization. But we can estimate the biases throughout the work space a different way: by fitting a smoothed spline, and use that as a function of bias across different angles. For every participant we base one spline on the aligned active localization trials and one on the aligned passive localization trials. These are used as estimates for both the aligned and rotated, active and passive localization. After subtracting the bias predicted by the spline on each trial from the localization response, we can determine an unbiased estimate of standard deviation, comparably unbiased to those of the no-cursor and training trials.
+Since localization reaches are made without a target, we can not use that exact approach for localization. But we can estimate the direction dependent biases throughout the work space a different way: by fitting a smoothed spline, and use that as a function of bias across different angles. For every participant we base one spline on the aligned active localization trials and one on the aligned passive localization trials. These are used as estimates of direction dependent biases in these two tasks for both the aligned and rotated phases. After subtracting the bias predicted by the spline on each trial from the localization response, we can determine an unbiased estimate of standard deviation, comparably unbiased to those of the no-cursor and training trials.
 
 We take a look at the accuracy of localization. On the left we show the distributions of localization responses across the workspace, showing that responses are mostly very close to the arc. On the right are the angular biases across the work space for all participants, as well as a 95% confidence interval and an average bias.
 
