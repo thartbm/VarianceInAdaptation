@@ -98,7 +98,7 @@ groups <- c(
 
 ```
 
-And we can test if all of the data is there:
+And we can test if all of the data is there (uncomment the lines running the `dataChecks()` function to verify):
 
 ```{r check_data}
 
@@ -132,13 +132,13 @@ groups <- c('org_control',
             'org_instructed60')
 sessions <- c('aligned')
 
-# dataChecks( groups   = groups, 
-#             sessions = sessions, 
+# dataChecks( groups   = groups,
+#             sessions = sessions,
 #             tasks    = tasks )
   
 ```
 
-One participants seems to be missing a block of 9 trials from each of the 4 kinds of localization, but other than that, there are only one or two trials missing from each participant. This is workable data.
+One participants seems to be missing a 9 trials from each of the 4 kinds of localization (a whole consecutive block in 3 kinds). Other than that, there are only one or two trials missing from a few participants. This is workable data.
 
 # Sample
 
@@ -171,13 +171,11 @@ We take a look at the accuracy of localization. On the left we show the distribu
 fig0_localizationProperties()
 ```
 
-There is some variance in the angular accuracy across the work space between participants, which means it will really pay off to account for this, and get an unbiased estimate of standard deviation / variance. If anything, the older participants seem less biased then the younger participants.
-
-However, we don't do any statistics on any of this.
+There is some variance in the angular accuracy across the work space between, and mostly within participants, which means it will really pay off to account for this, and get an unbiased (de-biased?) estimate of standard deviation / variance. If anything, the older participants seem less biased then the younger participants, but we're not going to stats tests for this.
 
 ## Variance measures
 
-Let's first see the data:
+Let's first see the main variance data in all conditions:
 
 ```{r fig.height=4, fig.width=8}
 fig4_sd_distributions()
@@ -191,7 +189,7 @@ The variance (or standard deviation, really) is higher in no-cursor trials it se
 baselineVarianceTests()
 ```
 
-So the model fits better when the factor `variable` (the measures of variance) is included (BF_10=6.83e+15). There is no real evidence one way or another for the factor `age` (BF_10=0.421). But the model is equally good whether or not the interaction is included (BF_10=0.188).
+So the model fits better when the factor `variable` (the measures of variance) is included (BF_10=6.83e+15). There is no real evidence one way or another for the factor `age` (BF_10=0.421). But the model is equally good whether or not the interaction is included (BF_10=0.128). (Notice that these Bayes Factors depend on random samples, so their exact value changes from run to run.)
 
 ## Variance follow-ups
 
@@ -213,9 +211,9 @@ Finally, there is evidence that there is a difference in the amount of variance 
 fig6_efferent_localization()
 ```
 
-Data points above the identity line are participants where the variance (sd) in passive localization is larger than in active localization, and those would be in line with an MLE or Bayes optimal integration account of afferent and efferent signals in these tasks. While there are a lot of data points that are in line with an MLE-like account (159/270 = 58.8%), there are also a lot of participants with data points that go against an MLE account (111/270 = 41.1%). On average the standard deviation in passive localization is 0.3 degrees larger than that in active localization, and this difference is significant (t(269)=4.07, p\<.001, $BF_{10}$= 197.1). However, if we'd want to do "reverse MLE", in order to get an estimate of the contribution of efferent signals, this would require all data to have the property that variance is higher in passive as compared to active localization, which is not the case. This argues against a straightforward Bayes-optimal integration of efferent and afferent signals in hand localization as measured here.
+Data points above the identity line are participants where the variance (sd) in passive localization is larger than in active localization, and those would be in line with an MLE or Bayes optimal integration account of afferent and efferent signals in these tasks. While there are a lot of data points that are in line with an MLE-like account (159/270 = 58.9% of participants have higher variance in the passive as compared to the active condition), there are also a lot of participants with data points that go against an MLE account (111/270 = 41.1%). On average the standard deviation in passive localization is 0.3 degrees larger than that in active localization, and this difference is significant (t(269)=4.07, p\<.001, $BF_{10}$= 197.1). However, if we'd want to do "reverse MLE", in order to get an estimate of the contribution of efferent signals, this would require all data to have the property that variance is higher in passive as compared to active localization, which is not the case. This argues against a straightforward Bayes-optimal integration of efferent and afferent signals in hand localization as measured here.
 
-Rather than throw out nearly half of participants where this does not work, we can try a "reverse MLE" on the group averages, to get an idea of how much efferent signals contribute to hand localization in our population overall. We'll calculate the weights only, for now, based on the aligned session. The biases are roughly zero there, so that estimating the size of an aligned signal based on two aligned measurements will be dominated by noise. However, we could try later on to do the same with rotated data, where the estimates are not around zero.
+Rather than throw out nearly half of participants where this does not work, we can try a "reverse MLE" on the group averages, to get an idea of how much efferent signals contribute to hand localization in our population overall. We'll calculate the weights only, for now, based on the aligned session. We could try the same on rotated data, but earlier we have seen this does not make much of a difference, and we have more data in the aligned session for more reliable calculations.
 
 ## Estimating the importance of efferent signals
 
@@ -247,7 +245,7 @@ That is, 91.36% afferent signal versus 8.64% efferent signal in the combined sig
 
 ------------------------------------------------------------------------
 
-As a different point, the purple line in the plot is an orthogonal distance regression (or PCA-based regression) that does not assume any directionality of the relationship (as opposed to a regular regression). With a slope close to 1, and a fairly high $R^2$, the relationship between the two types of localization, shows that either one could predict the other and probably that the participants are relatively reliable in how they perform the experiments.
+As a different point, the purple line in the plot is an orthogonal distance regression (or PCA-based regression) that does not assume any directionality of the relationship (as opposed to a more common ordinary least squares regression). With a slope close to 1, and a fairly high $R^2$, the relationship between the two types of localization, shows that either one could predict the other and probably that the participants are relatively reliable in how they perform the experiments.
 
 One thing to keep in mind is that localization is performed after the movement has been completed, and the efferent signal might have a bigger influence during the movement than after. So while this data shows no evidence of integration of efferent and afferent signals (Bayes / MLE style) that could be because it is particularly hard to measure the effect of efferent signals on hand localization.
 
@@ -259,7 +257,7 @@ fig5_variance_relations()
 
 There could be a weak relationship between noise in training reaches, and noise in no-cursor reaches (ODR: $R^2$=0.22), but the data fans out from the origin (clear heteroscadasticity). There is a floor effect, of course, and this could drive part of that relationship.
 
-While there should be a similar floor effect in the measures of localization,the relationship between each of the types of reaches (training, no-cursor) and each type of lcoalization (active, passive) is even weaker (ODR: all $R^2$ \< 0.09). Nevertheless, the relationship between variance in no-cursor reaches and in training reaches is not very convincing.
+While there should be a similar floor effect in the measures of variance in localization, the relationship between variance in each of the types of reaches (training, no-cursor) and each type of localization (active, passive) is even weaker (ODR: all $R^2$ \< 0.09). Nevertheless, the relationship between variance in no-cursor reaches and in training reaches is not very strong.
 
 # Rotated phase
 
@@ -293,7 +291,7 @@ There might be some relationship between proprioceptive recalibration and implic
 fig9_localizationShift2_implicit()
 ```
 
-Here we first test if the changes can be predicted by the variance in aligned localization. The idea is that if hand localization shifts are a perceptual change, and maximum likelihood approaches to cue integration would still have some  relevance here, then perceptual processes with higher variance should shift more. That is: participants with higher variance in hand localization should have higher localization shifts. And if localization shifts are part of reach aftereffects, then participants with higher localization variances should also have higher aftereffects.
+Here we first test if the changes can be predicted by the variance in aligned localization. The idea is that if hand localization shifts are a perceptual change, and maximum likelihood approaches to cue integration would still have some relevance here, then perceptual processes with higher variance should shift more. That is: participants with higher variance in hand localization should have higher localization shifts. And if localization shifts are part of reach aftereffects, then participants with higher localization variances should also have higher aftereffects.
 
 Let's plot this:
 
