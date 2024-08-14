@@ -110,7 +110,10 @@ baselineVarianceFollowUps <- function() {
       var2vals <- df$value[which(df$variable == var2)]
       bt <- BayesFactor::ttestBF(var1vals, var2vals, paired=TRUE)
       bt_e <- BayesFactor::extractBF( bt )
-      cat( sprintf('BF: %0.4f\n',bt_e$bf ) )
+      # cat( sprintf('BF: %0.4f\n',bt_e$bf ) )
+      
+      cat( sprintf('BF: %s\n',formatC(bt_e$bf, format = "e", digits = 2) ) )
+      
       # BFvals[idx1,idx2] <- bt_e$bf 
       cat('\n')
     }
