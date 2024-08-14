@@ -15,11 +15,33 @@ fig4_sd_distributions <- function(target='inline') {
   
   old_df <- all_df[which(all_df$group %in% c("older_control", "older_instructed")),]
   
+  
+  filename <- 'Fig4_sd_distributions'
+  width=11
+  height=4
+  dpi=300
+  
   if (target=='svg') {
-    svglite::svglite(file='doc/Fig4_sd_distributions.svg', width=9.5, height=4, fix_text_size = FALSE)
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=11, height=4, fix_text_size = FALSE)
   }
   if (target=='pdf') {
-    cairo_pdf(filename='doc/Fig4_sd_distributions.pdf', width=11, height=4)
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=11, height=4)
+  }
+  
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
   }
   
 
@@ -74,7 +96,7 @@ fig4_sd_distributions <- function(target='inline') {
     
   }
   
-  if (target %in% c('pdf','svg')) {
+  if (target %in% c('pdf','svg','png','tiff')) {
     dev.off()
   }
   
@@ -120,7 +142,7 @@ fig5_variance_relations <- function(target='inline') {
                 asp=1,
                 exclude_groups=exclude_groups,
                 addregression='ODR',
-                width=11,
+                width=8,
                 height=4,
                 mat=mat)
   
@@ -424,8 +446,7 @@ figX_scatters <- function(target='inline',
   if (is.null(height)) {
     height <- c(4,4,2.5,6,NA,5.0,NA,4 )[npanels]
   }
-  
-  
+
   
   dpi = 300
   
@@ -475,6 +496,9 @@ figX_scatters <- function(target='inline',
                   byrow=TRUE)
   }
   
+  llabels <- toupper(letters)
+  llab_no <- 0
+  
   layout(mat=mat)
   
   tick_map <- list('40'=c(0,10,20,30,40),
@@ -516,6 +540,9 @@ figX_scatters <- function(target='inline',
     
     title(xlab=labels[1],line=3)
     title(ylab=labels[2],line=2)
+    
+    llab_no <- llab_no + 1
+    title(main=llabels[llab_no],line=-1,xpd=TRUE,adj=0.975,cex.main=2)
     
     atx = tick_map[[sprintf('%d',xlim[2])]]
     aty = tick_map[[sprintf('%d',ylim[2])]]
@@ -570,7 +597,8 @@ figX_scatters <- function(target='inline',
           labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f', N, Rsquared, p)
         }
         
-        text(x=xlim[1],
+        
+        text(x=xlim[1]+0.10*abs(diff(xlim)),
              y=ylim[2],
              labels=labels,
              adj=c(0,1))
@@ -676,12 +704,29 @@ figX_multi_scatters <- function(target='inline',
   
   width  <- c(4,8,7.5,6,NA,NA,NA,11)[npanels]
   height <- c(4,4,2.5,6,NA,NA,NA,4 )[npanels]
+  dpi    <- 300
   
   if (target=='svg') {
     svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
   }
   if (target=='pdf') {
     cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+  }
+  
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
   }
   
   par(mar=c(4.5, 4.5, 0.5, 0.5))
@@ -815,7 +860,7 @@ figX_multi_scatters <- function(target='inline',
     
   }
   
-  if (target %in% c('pdf','svg')) {
+  if (target %in% c('pdf','svg','png','tiff')) {
     dev.off()
   }
   
@@ -972,12 +1017,28 @@ fig0_localizationProperties <- function(target='inline') {
   filename <- 'Fig0_localization_distribution'
   width=6
   height=8
+  dpi = 300
   
   if (target=='svg') {
     svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
   }
   if (target=='pdf') {
     cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+  }
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
   }
   
   lablines=2.5
@@ -1012,7 +1073,8 @@ fig0_localizationProperties <- function(target='inline') {
   
   ls <- list(l1, l2, l3, l4)
   
-  
+  llabels <- toupper(letters)
+  llab_no <- 0
   
   for (l.idx in c(1:length(ls))) {
     
@@ -1070,6 +1132,12 @@ fig0_localizationProperties <- function(target='inline') {
     # title(ylab='y [cm]',line=lablines)
     title(xlab=sprintf('(%d samples)', nsamples ), line=-1)
     
+    
+    # ADD letter label here?
+    llab_no <- llab_no + 1
+    title(main=llabels[llab_no],line=-1.1,xpd=TRUE,adj=0.975,cex.main=2)
+    
+    
     plot(-1000,-1000,
          xlim=c(30,150),ylim=c(-40,40),
          asp=1,
@@ -1120,7 +1188,7 @@ fig0_localizationProperties <- function(target='inline') {
     
   }
   
-  if (target %in% c('svg','pdf')) {
+  if (target %in% c('svg','pdf','png','tiff')) {
     dev.off()
   }
   
