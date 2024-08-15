@@ -205,3 +205,58 @@ plotRAEdecay <- function() {
   legend(10,10,c('include','exclude'),col=c('#FF0000','#0000FF'),pch=1,cex=1,bty='n')
   
 }
+
+
+
+OLSslopeTest <- function(ns=c(5,10,50,100,500), reps=2000) {
+  
+  slopes <- list()
+  
+  for (n in ns) {
+    
+    slopes[sprintf('%d', n)] <- c()
+    
+    for (rep in c(1:reps)) {
+      
+      X <- rnorm(n, sd=4)
+      Y <- X + rnorm(n, sd=1)
+      
+      temp_mod <- lm(Y~X)
+      
+      slopes[[sprintf('%d', n)]] <- c(slopes[[sprintf('%d', n)]], temp_mod$coeff[2])
+      
+    }
+    
+  }
+  
+  # return(slopes)
+  
+  plot(-1000,-1000, 
+       main='',xlab='sample size',ylab='recovered slope',
+       xlim=c(0,length(ns)+1),ylim=c(0.9,1.1),
+       ax=F,bty='n'
+  )
+  
+  lines(x=c(0,length(ns)+1),
+        y=c(1,1),
+        col='#666666',
+        lty=3 )
+  
+  for (nidx in c(1:length(ns))) {
+    S <- slopes[[sprintf('%d',ns[nidx])]]
+    avg <- mean(S)
+    CI <- Reach::getConfidenceInterval(S,method='b')
+    print(c(ns[nidx], avg, CI))
+    
+    polygon(x=c(-0.4,0.4,0.4,-0.4)+nidx,
+            y=rep(CI,each=2), border=NA, col='#FF000066')
+    lines(x=c(-0.4,0.4)+nidx,
+          y=rep(avg,2),
+          col='#FF0000')
+    
+  }
+  
+  axis(side=1,at=c(1:length(ns)),labels=sprintf('%d',ns))
+  axis(side=2,at=seq(0.9,1.1,0.05))
+  
+}
