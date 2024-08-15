@@ -255,7 +255,7 @@ That said, we're also interested in if and how the variance in the other variabl
 fig5_variance_relations()
 ```
 
-There could be a weak relationship between noise in training reaches, and noise in no-cursor reaches (ODR: $R^2$=0.22), but the data fans out from the origin (clear heteroscadasticity). There is a floor effect, of course, and this could drive part of that relationship.
+There could be a weak relationship between noise in training reaches, and noise in no-cursor reaches (ODR: $R^2$=0.22), but the data fans out from the origin (clear heteroscedasticity). There is a floor effect, of course, and this could drive part of that relationship.
 
 While there should be a similar floor effect in the measures of variance in localization, the relationship between variance in each of the types of reaches (training, no-cursor) and each type of localization (active, passive) is even weaker (ODR: all $R^2$ \< 0.09). Nevertheless, the relationship between variance in no-cursor reaches and in training reaches is not very strong.
 
@@ -263,7 +263,7 @@ While there should be a similar floor effect in the measures of variance in loca
 
 ## Predicting adaptation rate
 
-Here we test the exploration-exploitation hypothesis: people with more reach variance learn/adapt faster because they can exploit what they learn during this exploration. Despite some good evidence that this hypothesis does not apply to motor adaptation (Wei / Kording / etal) the idea keeps popping up. Since we have a fairly large data set, we should be able to test this.
+Here we test the exploration-exploitation hypothesis: people with more reach variance learn/adapt faster because they can exploit what they learn during this exploration. Despite some good evidence that this hypothesis does not apply to motor adaptation (Wei / Kording / etal) the idea keeps popping up. Since we have a fairly large data set, we should be able to test this again.
 
 Question: Is the speed of adaptation related to any of the baseline reach variance measures?
 
