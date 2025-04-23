@@ -4,6 +4,189 @@
 
 # NCM poster figures ----
 
+fig3_localizationProperties <- function(target='inline') {
+  
+  filename <- 'Fig3'
+  width=6
+  height=8
+  dpi = 300
+  
+  if (target=='svg') {
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
+  }
+  if (target=='pdf') {
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+  }
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
+  }
+  
+  lablines=2.5
+  par(mar=c(3.6, 3.6, 0.25, 2))
+  layout(mat=matrix(c(1:8), byrow=TRUE, ncol=2), width=c(2,3))
+  
+  # project colors
+  colors <- getColors()
+  
+  # split data into 4 subsets:
+  l <- getAlignedLocalization()
+  older   <- c("older_instructed", 
+               "older_control")
+  younger <- c("handview",
+               "instructed60",
+               "org_instructed",
+               "control60",
+               "EDSmatch",
+               "org_control60",
+               "instructed",
+               "org_control",
+               "cursorjump",
+               "EDS",
+               "control",
+               "org_instructed60")
+  
+  l1 <- l[which(l$task == 'activelocalization' & l$group %in% younger),]
+  l2 <- l[which(l$task == 'passivelocalization' & l$group %in% younger),]
+  
+  l3 <- l[which(l$task == 'activelocalization' & l$group %in% older),]
+  l4 <- l[which(l$task == 'passivelocalization' & l$group %in% older),]
+  
+  ls <- list(l1, l2, l3, l4)
+  
+  llabels <- toupper(letters)
+  llab_no <- 0
+  
+  for (l.idx in c(1:length(ls))) {
+    
+    l <- ls[[l.idx]]
+    
+    lcol <- colors[c(3,4,7,8)[l.idx]]
+    
+    colpal <- c()
+    for (balance in seq(0,1,length=64)) {
+      colpal <- c(colpal, Reach::colorMix(a='#ffffff', b=lcol, balance = c(1-balance, balance)))
+    }
+    
+    
+    # dist2d <- hist2D(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-13,13,0,13))
+    # nsamples <- sum(dist2d$z)
+    
+    dist2d <- MASS::kde2d(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-14,14,-0.5,14), h=1)
+    nsamples <- dim(l)[1]
+    
+    image(dist2d, col=colpal, asp=1, xlim=c(-15,15), ylim=c(-0.5,17), ax=FALSE, bty='n')
+    
+    
+    a <- (c(0:180) / 180) * pi
+    lines(x=cos(a)*12,
+          y=sin(a)*12,
+          col='black',
+          lty=3)
+    lines(x=c(-12,12),y=c(0,0),col='black',lty=3)
+    a = (c(45,90,135)/180)*pi
+    for (aa in a) {
+      lines(x=c(0,cos(aa)*12),
+            y=c(0,sin(aa)*12),
+            col='black',
+            lty=3)
+    }
+    ta <- c(0,45,90,135,180)
+    text(x=cos((ta/180)*pi)*14,
+         y=sin((ta/180)*pi)*14,
+         labels=sprintf('%d°',ta),
+         xpd=TRUE)
+    
+    
+    # axis(side=1, at=c(-12,-6,0,6,12))
+    # axis(side=2, at=c(       0,6,12))
+    
+    title(main=c('younger\nactive localization',
+                 'younger\npassive localization',
+                 'older\nactive localization',
+                 'older\npassive localization')[l.idx], 
+          line=-2, 
+          xpd=TRUE,
+          cex.main=1,
+          font.main=1)
+    # title(xlab='x [cm]',line=lablines)
+    # title(ylab='y [cm]',line=lablines)
+    title(xlab=sprintf('(%d samples)', nsamples ), line=-1)
+    
+    
+    # ADD letter label here?
+    llab_no <- llab_no + 1
+    title(main=llabels[llab_no],line=-1.1,xpd=TRUE,adj=0.975,cex.main=2)
+    
+    
+    plot(-1000,-1000,
+         xlim=c(30,150),ylim=c(-40,40),
+         asp=1,
+         main='',xlab='',ylab='',
+         ax=FALSE, bty='n')
+    
+    lines(x=c(30,150),y=c(0,0),lty=2,col='#999999')
+    
+    acol <- setColorAlpha(col=lcol, alpha=c(8,8,24,24)[l.idx])
+    
+    participants <- unique(l$participant)
+    
+    
+    X <- c(40:140)
+    allpredspl <- matrix(data=NA,nrow=length(X),ncol=length(unique(l$participant)))
+    
+    for (ppno in c(1:length(participants))) {
+      
+      participant <- participants[ppno]
+      
+      # pdf <- l[which(l$participant == participant),]
+      pdf <- cleanLocalization(l[which(l$participant == participant),])
+      locspl <- getSpline(pdf)
+      hr <- range(pdf$targetangle_deg)
+      psp <- predict(locspl, x=seq(min(hr), max(hr), length=50))
+      lines(psp, col=acol)
+      
+      intpredspl <- predict(locspl, x=X[which(X > hr[1] & X < hr[2])])
+      allpredspl[intpredspl$x-(min(X)-1),ppno] <- intpredspl$y
+    }
+    
+    title(xlab='hand movement direction [°]',line=lablines)
+    title(ylab='localization error [°]',line=lablines)
+    
+    axis(side=1, at=c(30,60,90,120,150))
+    axis(side=2, at=c(-30,0,30))
+    
+    CI95 <- apply(allpredspl,MARGIN=1,FUN=Reach::getConfidenceInterval)
+    
+    polygon(x = c(X,rev(X)),
+            y = c(CI95[1,], rev(CI95[2,])),
+            border=FALSE,
+            col=setColorAlpha(col=lcol, alpha=48) )
+    
+    lines(x=X, 
+          y=rowMeans(allpredspl, na.rm=TRUE),
+          col=lcol)
+    
+  }
+  
+  if (target %in% c('svg','pdf','png','tiff')) {
+    dev.off()
+  }
+  
+}
+
+
 
 fig4_sd_distributions <- function(target='inline') {
   
@@ -16,7 +199,7 @@ fig4_sd_distributions <- function(target='inline') {
   old_df <- all_df[which(all_df$group %in% c("older_control", "older_instructed")),]
   
   
-  filename <- 'Fig4_sd_distributions'
+  filename <- 'Fig4'
   width=11
   height=4
   dpi=300
@@ -103,24 +286,84 @@ fig4_sd_distributions <- function(target='inline') {
 }
 
 
-fig5_a_variance_relations <- function(target='inline') {
+
+# fig5_a_efferent_localization <- function(target='inline') {
+#   
+#   var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
+#   
+#   exclude_groups <- c('older')
+#   
+#   figX_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig6_efferent_localization',
+#                 col_idx=c(3),
+#                 pch=1,
+#                 lim=20,
+#                 identity=TRUE,
+#                 asp=1,
+#                 exclude_group=exclude_groups)
+#   
+# }
+
+# fig5_b_efferent_localization <- function(target='inline') {
+#   
+#   var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
+#   
+#   exclude_groups <- c('older')
+#   
+#   figX_multi_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig6_efferent_localization',
+#                 col_idx=c(3,7),
+#                 pch=1,
+#                 lim=20,
+#                 identity=TRUE,
+#                 asp=1,
+#                 exclude_group=list(exclude_groups,NULL),
+#                 include_group=list(NULL,exclude_groups),
+#                 addregression='ODR')
+#   
+# }
+
+
+fig5_efferent_localization <- function(target='inline') {
   
-  var_pairs <- list( c('aligned_training_sd','aligned_nocursor_sd'),
-                     c('aligned_training_sd','aligned_activelocalization_sd'),
-                     c('aligned_training_sd','aligned_passivelocalization_sd'))
+  var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
   
-  exclude_groups <- c('older')
+  exclude_groups <- c()
   
-  figX_scatters(target=target,
-                var_pairs=var_pairs,
-                filename='Fig5_sd_relations',
-                col_idx=c(2,3,4),
-                exclude_groups=exclude_groups)
+  figX_multi_scatters(target=target,
+                      var_pairs=var_pairs,
+                      filename='Fig5',
+                      col_idx=c(3),
+                      pch=1,
+                      lim=20,
+                      identity=TRUE,
+                      asp=1,
+                      exclude_group=list(NULL),
+                      # include_group=list(NULL,exclude_groups),
+                      addregression='ODR')
   
 }
 
+# fig6_a_variance_relations <- function(target='inline') {
+#   
+#   var_pairs <- list( c('aligned_training_sd','aligned_nocursor_sd'),
+#                      c('aligned_training_sd','aligned_activelocalization_sd'),
+#                      c('aligned_training_sd','aligned_passivelocalization_sd'))
+#   
+#   exclude_groups <- c('older')
+#   
+#   figX_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig5_sd_relations',
+#                 col_idx=c(2,3,4),
+#                 exclude_groups=exclude_groups)
+#   
+# }
 
-fig5_variance_relations <- function(target='inline') {
+
+fig6_variance_relations <- function(target='inline') {
   
   var_pairs <- list( c('aligned_nocursor_sd','aligned_training_sd'),
                      # c('aligned_training_sd','aligned_nocursor_sd'),
@@ -136,7 +379,7 @@ fig5_variance_relations <- function(target='inline') {
   
   figX_scatters(target=target,
                 var_pairs=var_pairs,
-                filename='Fig5_sd_relations',
+                filename='Fig6',
                 col_idx=c(1,3,4,3,4),
                 pch=1,
                 asp=1,
@@ -149,120 +392,62 @@ fig5_variance_relations <- function(target='inline') {
 }
 
 
-fig6_a_efferent_localization <- function(target='inline') {
-  
-  var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
-  
-  exclude_groups <- c('older')
-  
-  figX_scatters(target=target,
-                var_pairs=var_pairs,
-                filename='Fig6_efferent_localization',
-                col_idx=c(3),
-                pch=1,
-                lim=20,
-                identity=TRUE,
-                asp=1,
-                exclude_group=exclude_groups)
-  
-}
 
-fig6_b_efferent_localization <- function(target='inline') {
-  
-  var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
-  
-  exclude_groups <- c('older')
-  
-  figX_multi_scatters(target=target,
-                var_pairs=var_pairs,
-                filename='Fig6_efferent_localization',
-                col_idx=c(3,7),
-                pch=1,
-                lim=20,
-                identity=TRUE,
-                asp=1,
-                exclude_group=list(exclude_groups,NULL),
-                include_group=list(NULL,exclude_groups),
-                addregression='ODR')
-  
-}
-
-
-fig6_efferent_localization <- function(target='inline') {
-  
-  var_pairs <- list( c('aligned_activelocalization_sd','aligned_passivelocalization_sd') )
-  
-  exclude_groups <- c()
-  
-  figX_multi_scatters(target=target,
-                      var_pairs=var_pairs,
-                      filename='Fig6_efferent_localization',
-                      col_idx=c(3),
-                      pch=1,
-                      lim=20,
-                      identity=TRUE,
-                      asp=1,
-                      exclude_group=list(NULL),
-                      # include_group=list(NULL,exclude_groups),
-                      addregression='ODR')
-  
-}
-
-fig7_a_variance2_learning <- function(target='inline') {
-  
-  var_pairs <- list( 
-                     c('aligned_training_sd','training_rate'),
-                     c('aligned_training_sd','training_asymptote'),
-                     c('aligned_nocursor_sd','training_rate'),
-                     c('aligned_nocursor_sd','training_asymptote')
-                   )
-  
-  exclude_groups <- c('older', 'org', '60', 'instructed')
-  
-  limits <- list( c(30,1),
-                  c(30,50),
-                  c(30,1),
-                  c(30,50) )
-  
-  figX_scatters(target=target,
-                var_pairs=var_pairs,
-                filename='Fig7_a_basevar_2_learningpars',
-                col_idx=c(1,1,2,2),
-                pch=16,
-                lim=limits,
-                identity=FALSE,
-                asp=NA,
-                exclude_groups=exclude_groups)
-  
-}
-
-fig7_b_variance2_learning <- function(target='inline') {
-  
-  var_pairs <- list( 
-    c('aligned_activelocalization_sd','training_rate'),
-    c('aligned_activelocalization_sd','training_asymptote'),
-    c('aligned_passivelocalization_sd','training_rate'),
-    c('aligned_passivelocalization_sd','training_asymptote')
-  )
-  
-  exclude_groups <- c('older', 'org', '60', 'instructed')
-  
-  limits <- list( c(20,1),
-                  c(20,50),
-                  c(20,1),
-                  c(20,50) )
-  
-  figX_scatters(target=target,
-                var_pairs=var_pairs,
-                filename='Fig7_b_locvar_2_learningpars',
-                col_idx=c(3,3,4,4),
-                pch=16,
-                lim=limits,
-                identity=FALSE,
-                asp=NA,
-                exclude_groups=exclude_groups)
-  
-}
+# fig7_a_variance2_learning <- function(target='inline') {
+#   
+#   var_pairs <- list( 
+#                      c('aligned_training_sd','training_rate'),
+#                      c('aligned_training_sd','training_asymptote'),
+#                      c('aligned_nocursor_sd','training_rate'),
+#                      c('aligned_nocursor_sd','training_asymptote')
+#                    )
+#   
+#   exclude_groups <- c('older', 'org', '60', 'instructed')
+#   
+#   limits <- list( c(30,1),
+#                   c(30,50),
+#                   c(30,1),
+#                   c(30,50) )
+#   
+#   figX_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig7_a_basevar_2_learningpars',
+#                 col_idx=c(1,1,2,2),
+#                 pch=16,
+#                 lim=limits,
+#                 identity=FALSE,
+#                 asp=NA,
+#                 exclude_groups=exclude_groups)
+#   
+# }
+# 
+# fig7_b_variance2_learning <- function(target='inline') {
+#   
+#   var_pairs <- list( 
+#     c('aligned_activelocalization_sd','training_rate'),
+#     c('aligned_activelocalization_sd','training_asymptote'),
+#     c('aligned_passivelocalization_sd','training_rate'),
+#     c('aligned_passivelocalization_sd','training_asymptote')
+#   )
+#   
+#   exclude_groups <- c('older', 'org', '60', 'instructed')
+#   
+#   limits <- list( c(20,1),
+#                   c(20,50),
+#                   c(20,1),
+#                   c(20,50) )
+#   
+#   figX_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig7_b_locvar_2_learningpars',
+#                 col_idx=c(3,3,4,4),
+#                 pch=16,
+#                 lim=limits,
+#                 identity=FALSE,
+#                 asp=NA,
+#                 exclude_groups=exclude_groups)
+#   
+# }
 
 fig7_variance2_learning <- function(target='inline') {
   
@@ -293,7 +478,7 @@ fig7_variance2_learning <- function(target='inline') {
   
   figX_scatters(target=target,
                 var_pairs=var_pairs,
-                filename='Fig7_basevar_2_learningpars',
+                filename='Fig7',
                 col_idx=c(1,2,3,4,1,2,3,4),
                 pch=16,
                 lim=limits,
@@ -326,7 +511,7 @@ fig8_localizationSD2_implicit <- function(target='inline') {
   
   figX_scatters(target=target,
                 var_pairs=var_pairs,
-                filename='Fig8_localizationvar_2_implicit',
+                filename='Fig8',
                 col_idx=c(1,3,3,2,4,4),
                 pch=1,
                 lim=limits,
@@ -346,7 +531,66 @@ fig8_localizationSD2_implicit <- function(target='inline') {
 # B: Passive localization shift / Reach aftereffects
 
 
-fig9_localizationShift2_implicit <- function(target='inline') {
+# fig9_localizationShift2_implicit <- function(target='inline') {
+#   
+#   var_pairs <- list( 
+#     c('activelocalization_shift',  'exclusion'),
+#     c('passivelocalization_shift', 'exclusion')
+#   )
+#   
+#   exclude_groups <- c('org') # 'instructed', 'older'
+#   
+#   limits <- list( c(10,-20), c(-5,35),
+#                   c(10,-20), c(-5,35)   )
+#   
+#   figX_scatters(target=target,
+#                 var_pairs=var_pairs,
+#                 filename='Fig9_localizationvShift_2_implicit',
+#                 col_idx=c(3,4),
+#                 pch=16,
+#                 lim=limits,
+#                 identity=TRUE,
+#                 asp=NA,
+#                 exclude_groups=exclude_groups,
+#                 addregression='ODR')
+#   
+# }
+
+fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
+  
+  filename <- 'Fig9'  
+  width  <- 6
+  height <- 6
+  dpi = 300
+  
+  if (target=='svg') {
+    svglite::svglite(file=sprintf('doc/%s.svg',filename), 
+                     width=width, 
+                     height=height, 
+                     fix_text_size = FALSE)
+  }
+  if (target=='pdf') {
+    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), 
+              width=width, 
+              height=height)
+  }
+  
+  if (target == 'png') {
+    png( filename = sprintf('doc/%s.png',filename),
+         width = width*dpi,
+         height = height*dpi,
+         res = dpi
+    )
+  }
+  if (target == 'tiff') {
+    tiff( filename = sprintf('doc/%s.tiff',filename),
+          compression = 'lzw',
+          width = width*dpi,
+          height = height*dpi,
+          res = dpi
+    )
+  }
+  
   
   var_pairs <- list( 
     c('activelocalization_shift',  'exclusion'),
@@ -358,7 +602,8 @@ fig9_localizationShift2_implicit <- function(target='inline') {
   limits <- list( c(10,-20), c(-5,35),
                   c(10,-20), c(-5,35)   )
   
-  figX_scatters(target=target,
+
+  figX_scatters(target='inline',
                 var_pairs=var_pairs,
                 filename='Fig9_localizationvShift_2_implicit',
                 col_idx=c(3,4),
@@ -367,7 +612,138 @@ fig9_localizationShift2_implicit <- function(target='inline') {
                 identity=TRUE,
                 asp=NA,
                 exclude_groups=exclude_groups,
-                addregression='ODR')
+                addregression='ODR',
+                mat=matrix(c(1,2,3,4),nrow=2,byrow=TRUE))
+  
+  
+  models        <- predictAftereffects()
+  df            <- models$data
+  active.model  <- models$active.model
+  passive.model <- models$passive.model
+  
+  ALc <- active.model$coefficients
+  PLc <- passive.model$coefficients
+  
+  ALpred <- ALc[1] + (df$activelocalization_shift  * ALc[2]) + (df$aligned_activelocalization_sd  * ALc[3])
+  PLpred <- PLc[1] + (df$passivelocalization_shift * PLc[2]) + (df$aligned_passivelocalization_sd * PLc[3])
+  
+  colors <- getColors()
+  
+  xlim <- c(-5,35)
+  ylim <- c(-5,35)
+  
+  plot(x=-1000, y=-1000,
+       main='',xlab='',ylab='',
+       xlim=xlim, ylim=ylim,
+       bty='n',ax=F)
+  
+  title(xlab='predicted aftereffects [°]\nactive localization sd & shift',line=3)
+  title(ylab='aftereffects [°]',line=2)
+  
+  
+  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+  lines(x=xlim,y=xlim,col='#999999',lty=2)
+  
+  x = df$exclusion
+  y = ALpred
+  col = colors[3]
+  
+  # active color = 3
+  add_OLS_regression(x = x,
+                     y = y,
+                     col=col)
+  
+  if (add_info) {
+    
+    # collect the info:
+    N <- length(x)
+    
+    # also: adjusted R-squared and p-value?
+    linmod <- lm(y ~ x)
+    slope <- coef(linmod)[2]
+    Rsquared <- summary(linmod)$adj.r.squared
+    f <- summary(linmod)$fstatistic
+    p <- pf(f[1],f[2],f[3],lower.tail=F)
+    attributes(p) <- NULL
+    
+    if (p < .001) {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001', N, Rsquared)
+    } else {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f', N, Rsquared, p)
+    }
+    
+    text(x=xlim[1],
+         y=ylim[2],
+         labels=labels,
+         adj=c(0,1),
+         col='black')
+    
+  }
+  
+  title(main=toupper(letters)[3],line=-1,xpd=TRUE,adj=0.975,cex.main=2)
+  
+  axis(side=1,at=seq(-5,35,10))
+  axis(side=2,at=seq(-5,35,10))
+  
+  
+  plot(x=-1000, y=-1000,
+       main='',xlab='',ylab='',
+       xlim=xlim, ylim=ylim,
+       bty='n',ax=F)
+  
+  title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
+  title(ylab='aftereffects [°]',line=2)
+  
+  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+  lines(x=xlim,y=xlim,col='#999999',lty=2)
+  
+  x = df$exclusion
+  y = PLpred
+  col = colors[4]
+  
+  # passive color = 4
+  add_OLS_regression(x = x,
+                     y = y,
+                     col = col)
+  
+  if (add_info) {
+    
+    # collect the info:
+    N <- length(x)
+    
+    # also: adjusted R-squared and p-value?
+    linmod <- lm(y ~ x)
+    slope <- coef(linmod)[2]
+    Rsquared <- summary(linmod)$adj.r.squared
+    f <- summary(linmod)$fstatistic
+    p <- pf(f[1],f[2],f[3],lower.tail=F)
+    attributes(p) <- NULL
+    
+    if (p < .001) {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001', N, Rsquared)
+    } else {
+      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f', N, Rsquared, p)
+    }
+    
+    text(x=xlim[1],
+         y=ylim[2],
+         labels=labels,
+         adj=c(0,1),
+         col='black')
+    
+  }
+  
+  title(main=toupper(letters)[4],line=-1,xpd=TRUE,adj=0.975,cex.main=2)
+  
+  axis(side=1,at=seq(-5,35,10))
+  axis(side=2,at=seq(-5,35,10))
+  
+  
+  if (target %in% c('pdf','svg','png','tiff','eps')) {
+    dev.off()
+  }
   
 }
 
@@ -496,10 +872,11 @@ figX_scatters <- function(target='inline',
                   byrow=TRUE)
   }
   
+  layout(mat=mat)
+  
+  
   llabels <- toupper(letters)
   llab_no <- 0
-  
-  layout(mat=mat)
   
   tick_map <- list('40'=c(0,10,20,30,40),
                    '30'=c(0,10,20,30),
@@ -867,332 +1244,150 @@ figX_multi_scatters <- function(target='inline',
 }
 
 
-fig10_multiple_regressions <- function(target='inline', add_info=TRUE) {
-  
-  width = 8
-  height = 5
-  
-  filename = 'fig10_aftereffects_multiple_regressions'
-  if (target=='svg') {
-    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
-  }
-  if (target=='pdf') {
-    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
-  }
-  
-  layout(mat=matrix(c(1:2),ncol=2,byrow=TRUE))
-  par(mar=c(4.5, 4.5, 0.5, 0.5))
-  
-  models        <- predictAftereffects()
-  df            <- models$data
-  active.model  <- models$active.model
-  passive.model <- models$passive.model
-  
-  ALc <- active.model$coefficients
-  PLc <- passive.model$coefficients
-  
-  ALpred <- ALc[1] + (df$activelocalization_shift  * ALc[2]) + (df$aligned_activelocalization_sd  * ALc[3])
-  PLpred <- PLc[1] + (df$passivelocalization_shift * PLc[2]) + (df$aligned_passivelocalization_sd * PLc[3])
-  
-  colors <- getColors()
-  
-  xlim <- c(-5,35)
-  ylim <- c(-5,35)
-  
-  plot(x=-1000, y=-1000,
-       main='',xlab='',ylab='',
-       xlim=xlim, ylim=ylim,
-       bty='n',ax=F)
-  
-  title(xlab='predicted aftereffects [°]\nactive localization sd & shift',line=3)
-  title(ylab='aftereffects [°]',line=2)
-  
-  
-  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
-  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
-  lines(x=xlim,y=xlim,col='#999999',lty=2)
-  
-  x = df$exclusion
-  y = ALpred
-  col = colors[3]
-  
-  # active color = 3
-  add_OLS_regression(x = x,
-                     y = y,
-                     col=col)
-  
-  if (add_info) {
-    
-    # collect the info:
-    N <- length(x)
-    
-    # also: adjusted R-squared and p-value?
-    linmod <- lm(y ~ x)
-    slope <- coef(linmod)[2]
-    Rsquared <- summary(linmod)$adj.r.squared
-    f <- summary(linmod)$fstatistic
-    p <- pf(f[1],f[2],f[3],lower.tail=F)
-    attributes(p) <- NULL
-    
-    if (p < .001) {
-      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
-    } else {
-      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
-    }
-    
-    text(x=xlim[1],
-         y=ylim[2],
-         labels=labels,
-         adj=c(0,1),
-         col=col)
-    
-  }
-  
-  
-  axis(side=1,at=seq(-5,35,10))
-  axis(side=2,at=seq(-5,35,10))
-  
-  
-  plot(x=-1000, y=-1000,
-       main='',xlab='',ylab='',
-       xlim=xlim, ylim=ylim,
-       bty='n',ax=F)
-  
-  title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
-  title(ylab='aftereffects [°]',line=2)
-  
-  lines(x=c(0,0),y=ylim,col='#999999',lty=2)
-  lines(x=xlim,y=c(0,0),col='#999999',lty=2)
-  lines(x=xlim,y=xlim,col='#999999',lty=2)
-  
-  x = df$exclusion
-  y = PLpred
-  col = colors[4]
-  
-  # passive color = 4
-  add_OLS_regression(x = x,
-                     y = y,
-                     col = col)
-  
-  if (add_info) {
-    
-    # collect the info:
-    N <- length(x)
-    
-    # also: adjusted R-squared and p-value?
-    linmod <- lm(y ~ x)
-    slope <- coef(linmod)[2]
-    Rsquared <- summary(linmod)$adj.r.squared
-    f <- summary(linmod)$fstatistic
-    p <- pf(f[1],f[2],f[3],lower.tail=F)
-    attributes(p) <- NULL
-    
-    if (p < .001) {
-      labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
-    } else {
-      labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
-    }
-    
-    text(x=xlim[1],
-         y=ylim[2],
-         labels=labels,
-         adj=c(0,1),
-         col=col)
-    
-  }
-  
-  
-  axis(side=1,at=seq(-5,35,10))
-  axis(side=2,at=seq(-5,35,10))
-  
-  if (target %in% c('pdf','svg')) {
-    dev.off()
-  }
-  
-}
+# fig10_multiple_regressions <- function(target='inline', add_info=TRUE) {
+#   
+#   width = 8
+#   height = 5
+#   
+#   filename = 'fig10_aftereffects_multiple_regressions'
+#   if (target=='svg') {
+#     svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
+#   }
+#   if (target=='pdf') {
+#     cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
+#   }
+#   
+#   layout(mat=matrix(c(1:2),ncol=2,byrow=TRUE))
+#   par(mar=c(4.5, 4.5, 0.5, 0.5))
+#   
+#   models        <- predictAftereffects()
+#   df            <- models$data
+#   active.model  <- models$active.model
+#   passive.model <- models$passive.model
+#   
+#   ALc <- active.model$coefficients
+#   PLc <- passive.model$coefficients
+#   
+#   ALpred <- ALc[1] + (df$activelocalization_shift  * ALc[2]) + (df$aligned_activelocalization_sd  * ALc[3])
+#   PLpred <- PLc[1] + (df$passivelocalization_shift * PLc[2]) + (df$aligned_passivelocalization_sd * PLc[3])
+#   
+#   colors <- getColors()
+#   
+#   xlim <- c(-5,35)
+#   ylim <- c(-5,35)
+#   
+#   plot(x=-1000, y=-1000,
+#        main='',xlab='',ylab='',
+#        xlim=xlim, ylim=ylim,
+#        bty='n',ax=F)
+#   
+#   title(xlab='predicted aftereffects [°]\nactive localization sd & shift',line=3)
+#   title(ylab='aftereffects [°]',line=2)
+#   
+#   
+#   lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+#   lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+#   lines(x=xlim,y=xlim,col='#999999',lty=2)
+#   
+#   x = df$exclusion
+#   y = ALpred
+#   col = colors[3]
+#   
+#   # active color = 3
+#   add_OLS_regression(x = x,
+#                      y = y,
+#                      col=col)
+#   
+#   if (add_info) {
+#     
+#     # collect the info:
+#     N <- length(x)
+#     
+#     # also: adjusted R-squared and p-value?
+#     linmod <- lm(y ~ x)
+#     slope <- coef(linmod)[2]
+#     Rsquared <- summary(linmod)$adj.r.squared
+#     f <- summary(linmod)$fstatistic
+#     p <- pf(f[1],f[2],f[3],lower.tail=F)
+#     attributes(p) <- NULL
+#     
+#     if (p < .001) {
+#       labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
+#     } else {
+#       labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
+#     }
+#     
+#     text(x=xlim[1],
+#          y=ylim[2],
+#          labels=labels,
+#          adj=c(0,1),
+#          col=col)
+#     
+#   }
+#   
+#   
+#   axis(side=1,at=seq(-5,35,10))
+#   axis(side=2,at=seq(-5,35,10))
+#   
+#   
+#   plot(x=-1000, y=-1000,
+#        main='',xlab='',ylab='',
+#        xlim=xlim, ylim=ylim,
+#        bty='n',ax=F)
+#   
+#   title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
+#   title(ylab='aftereffects [°]',line=2)
+#   
+#   lines(x=c(0,0),y=ylim,col='#999999',lty=2)
+#   lines(x=xlim,y=c(0,0),col='#999999',lty=2)
+#   lines(x=xlim,y=xlim,col='#999999',lty=2)
+#   
+#   x = df$exclusion
+#   y = PLpred
+#   col = colors[4]
+#   
+#   # passive color = 4
+#   add_OLS_regression(x = x,
+#                      y = y,
+#                      col = col)
+#   
+#   if (add_info) {
+#     
+#     # collect the info:
+#     N <- length(x)
+#     
+#     # also: adjusted R-squared and p-value?
+#     linmod <- lm(y ~ x)
+#     slope <- coef(linmod)[2]
+#     Rsquared <- summary(linmod)$adj.r.squared
+#     f <- summary(linmod)$fstatistic
+#     p <- pf(f[1],f[2],f[3],lower.tail=F)
+#     attributes(p) <- NULL
+#     
+#     if (p < .001) {
+#       labels <- sprintf('N = %d\nadj. R² = %0.2f\np<.001\nslope = %0.2f', N, Rsquared, slope)
+#     } else {
+#       labels <- sprintf('N = %d\nadj. R² = %0.2f\np=%0.2f\nslope = %0.2f', N, Rsquared, p, slope)
+#     }
+#     
+#     text(x=xlim[1],
+#          y=ylim[2],
+#          labels=labels,
+#          adj=c(0,1),
+#          col=col)
+#     
+#   }
+#   
+#   
+#   axis(side=1,at=seq(-5,35,10))
+#   axis(side=2,at=seq(-5,35,10))
+#   
+#   if (target %in% c('pdf','svg')) {
+#     dev.off()
+#   }
+#   
+# }
 
-
-fig0_localizationProperties <- function(target='inline') {
-  
-  filename <- 'Fig0_localization_distribution'
-  width=6
-  height=8
-  dpi = 300
-  
-  if (target=='svg') {
-    svglite::svglite(file=sprintf('doc/%s.svg',filename), width=width, height=height, fix_text_size = FALSE)
-  }
-  if (target=='pdf') {
-    cairo_pdf(filename=sprintf('doc/%s.pdf',filename), width=width, height=height)
-  }
-  if (target == 'png') {
-    png( filename = sprintf('doc/%s.png',filename),
-         width = width*dpi,
-         height = height*dpi,
-         res = dpi
-    )
-  }
-  if (target == 'tiff') {
-    tiff( filename = sprintf('doc/%s.tiff',filename),
-          compression = 'lzw',
-          width = width*dpi,
-          height = height*dpi,
-          res = dpi
-    )
-  }
-  
-  lablines=2.5
-  par(mar=c(3.6, 3.6, 0.25, 2))
-  layout(mat=matrix(c(1:8), byrow=TRUE, ncol=2), width=c(2,3))
-  
-  # project colors
-  colors <- getColors()
-  
-  # split data into 4 subsets:
-  l <- getAlignedLocalization()
-  older   <- c("older_instructed", 
-               "older_control")
-  younger <- c("handview",
-               "instructed60",
-               "org_instructed",
-               "control60",
-               "EDSmatch",
-               "org_control60",
-               "instructed",
-               "org_control",
-               "cursorjump",
-               "EDS",
-               "control",
-               "org_instructed60")
-  
-  l1 <- l[which(l$task == 'activelocalization' & l$group %in% younger),]
-  l2 <- l[which(l$task == 'passivelocalization' & l$group %in% younger),]
-  
-  l3 <- l[which(l$task == 'activelocalization' & l$group %in% older),]
-  l4 <- l[which(l$task == 'passivelocalization' & l$group %in% older),]
-  
-  ls <- list(l1, l2, l3, l4)
-  
-  llabels <- toupper(letters)
-  llab_no <- 0
-  
-  for (l.idx in c(1:length(ls))) {
-    
-    l <- ls[[l.idx]]
-    
-    lcol <- colors[c(3,4,7,8)[l.idx]]
-    
-    colpal <- c()
-    for (balance in seq(0,1,length=64)) {
-      colpal <- c(colpal, Reach::colorMix(a='#ffffff', b=lcol, balance = c(1-balance, balance)))
-    }
-    
-    
-    # dist2d <- hist2D(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-13,13,0,13))
-    # nsamples <- sum(dist2d$z)
-    
-    dist2d <- MASS::kde2d(x=l$tapx_cm, y=l$tapy_cm, n=c(301,151), lims=c(-14,14,-0.5,14), h=1)
-    nsamples <- dim(l)[1]
-    
-    image(dist2d, col=colpal, asp=1, xlim=c(-15,15), ylim=c(-0.5,17), ax=FALSE, bty='n')
-    
-    
-    a <- (c(0:180) / 180) * pi
-    lines(x=cos(a)*12,
-          y=sin(a)*12,
-          col='black',
-          lty=3)
-    lines(x=c(-12,12),y=c(0,0),col='black',lty=3)
-    a = (c(45,90,135)/180)*pi
-    for (aa in a) {
-      lines(x=c(0,cos(aa)*12),
-            y=c(0,sin(aa)*12),
-            col='black',
-            lty=3)
-    }
-    ta <- c(0,45,90,135,180)
-    text(x=cos((ta/180)*pi)*14,
-         y=sin((ta/180)*pi)*14,
-         labels=sprintf('%d°',ta),
-         xpd=TRUE)
-    
-    
-    # axis(side=1, at=c(-12,-6,0,6,12))
-    # axis(side=2, at=c(       0,6,12))
-    
-    title(main=c('younger\nactive localization',
-                 'younger\npassive localization',
-                 'older\nactive localization',
-                 'older\npassive localization')[l.idx], 
-          line=-2, 
-          xpd=TRUE,
-          cex.main=1,
-          font.main=1)
-    # title(xlab='x [cm]',line=lablines)
-    # title(ylab='y [cm]',line=lablines)
-    title(xlab=sprintf('(%d samples)', nsamples ), line=-1)
-    
-    
-    # ADD letter label here?
-    llab_no <- llab_no + 1
-    title(main=llabels[llab_no],line=-1.1,xpd=TRUE,adj=0.975,cex.main=2)
-    
-    
-    plot(-1000,-1000,
-         xlim=c(30,150),ylim=c(-40,40),
-         asp=1,
-         main='',xlab='',ylab='',
-         ax=FALSE, bty='n')
-    
-    lines(x=c(30,150),y=c(0,0),lty=2,col='#999999')
-    
-    acol <- setColorAlpha(col=lcol, alpha=c(8,8,24,24)[l.idx])
-    
-    participants <- unique(l$participant)
-    
-    
-    X <- c(40:140)
-    allpredspl <- matrix(data=NA,nrow=length(X),ncol=length(unique(l$participant)))
-    
-    for (ppno in c(1:length(participants))) {
-      
-      participant <- participants[ppno]
-      
-      # pdf <- l[which(l$participant == participant),]
-      pdf <- cleanLocalization(l[which(l$participant == participant),])
-      locspl <- getSpline(pdf)
-      hr <- range(pdf$targetangle_deg)
-      psp <- predict(locspl, x=seq(min(hr), max(hr), length=50))
-      lines(psp, col=acol)
-      
-      intpredspl <- predict(locspl, x=X[which(X > hr[1] & X < hr[2])])
-      allpredspl[intpredspl$x-(min(X)-1),ppno] <- intpredspl$y
-    }
-    
-    title(xlab='hand movement direction [°]',line=lablines)
-    title(ylab='localization error [°]',line=lablines)
-    
-    axis(side=1, at=c(30,60,90,120,150))
-    axis(side=2, at=c(-30,0,30))
-    
-    CI95 <- apply(allpredspl,MARGIN=1,FUN=Reach::getConfidenceInterval)
-    
-    polygon(x = c(X,rev(X)),
-            y = c(CI95[1,], rev(CI95[2,])),
-            border=FALSE,
-            col=setColorAlpha(col=lcol, alpha=48) )
-    
-    lines(x=X, 
-          y=rowMeans(allpredspl, na.rm=TRUE),
-          col=lcol)
-    
-  }
-  
-  if (target %in% c('svg','pdf','png','tiff')) {
-    dev.off()
-  }
-  
-}
 
 
 # color utilities -----
