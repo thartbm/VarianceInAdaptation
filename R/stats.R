@@ -79,6 +79,17 @@ baselineVarianceTests <- function() {
   
   print(bayestestR::bayesfactor_inclusion(baymod))
   
+  cat('\n\nwith younger =< 35:\n\n')
+  
+  dems <- read.csv('data/demographics.csv', stringsAsFactors = FALSE)
+  
+  idx <- which(dems$group %in% c('older_control', 'older_instructed'))
+  idx <- c(idx, which( dems$group %notin% c('older_control', 'older_instructed') & dems$age < 36) )
+  participants <- dems$participant[idx]
+  
+  selectdf <- df[which(df$participant %in% participants),]
+  Abaymod <- BayesFactor::anovaBF(value ~ variable + age, data=selectdf)
+  print(bayestestR::bayesfactor_inclusion(Abaymod))
   
 }
 
