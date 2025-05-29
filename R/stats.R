@@ -129,6 +129,11 @@ baselineVarianceFollowUps <- function() {
       cat('\n')
     }
   }
+
+  
+  print(t.test(df$value[which(df$variable == 'aligned_activelocalization_sd')],
+                df$value[which(df$variable == 'aligned_passivelocalization_sd')],
+                paired=TRUE))
   
   # colnames( BFvals ) <- variables
   # rownames( BFvals ) <- variables
