@@ -637,8 +637,8 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
        xlim=xlim, ylim=ylim,
        bty='n',ax=F)
   
-  title(xlab='predicted aftereffects [°]\nactive localization sd & shift',line=3)
-  title(ylab='aftereffects [°]',line=2)
+  title(ylab='predicted aftereffects [°]\nactive localization sd & shift',line=2)
+  title(xlab='implicit aftereffects [°]',line=3)
   
   
   lines(x=c(0,0),y=ylim,col='#999999',lty=2)
@@ -647,6 +647,11 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
   
   x = df$exclusion
   y = ALpred
+  
+  # y = df$exclusion
+  # x = ALpred
+  
+  
   col = colors[3]
   
   # active color = 3
@@ -692,8 +697,10 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
        xlim=xlim, ylim=ylim,
        bty='n',ax=F)
   
-  title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
-  title(ylab='aftereffects [°]',line=2)
+  # title(xlab='predicted aftereffects [°]\npassive localization sd & shift',line=3)
+  # title(ylab='aftereffects [°]',line=2)
+  title(ylab='predicted aftereffects [°]\npassive localization sd & shift',line=2)
+  title(xlab='implicit aftereffects [°]',line=3)
   
   lines(x=c(0,0),y=ylim,col='#999999',lty=2)
   lines(x=xlim,y=c(0,0),col='#999999',lty=2)
@@ -701,6 +708,11 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
   
   x = df$exclusion
   y = PLpred
+  
+  # y = df$exclusion
+  # x = PLpred
+  
+  
   col = colors[4]
   
   # passive color = 4
