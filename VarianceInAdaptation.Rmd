@@ -122,8 +122,8 @@ tasks <- c('training',
            'passivelocalization',
            'nocursor')
 
-# dataChecks( groups   = groups, 
-#             sessions = sessions, 
+# dataChecks( groups   = groups,
+#             sessions = sessions,
 #             tasks    = tasks )
   
 groups <- c('org_control',
@@ -168,7 +168,7 @@ Since localization reaches are made without a target, we can not use that exact 
 We take a look at the accuracy of localization. On the left we show the distributions of localization responses across the workspace, showing that responses are mostly very close to the arc. On the right are the angular biases across the work space for all participants, as well as a 95% confidence interval and an average bias.
 
 ```{r fig.width=6, fig.height=8}
-fig0_localizationProperties()
+fig3_localizationProperties()
 ```
 
 There is some variance in the angular accuracy across the work space between, and mostly within participants, which means it will really pay off to account for this, and get an unbiased (de-biased?) estimate of standard deviation / variance. If anything, the older participants seem less biased then the younger participants, but we're not going to stats tests for this.
@@ -208,7 +208,7 @@ Finally, there is evidence that there is a difference in the amount of variance 
 *If* active hand localization can use both afferent and efferent signals to determine where the hand is, whereas passive hand localization can only use afferent signals, *and if* efferent and afferent signals are combined in a Bayes optimal way (e.g. as a Maximum Likelihood Estimate or MLE) *then* the variance in passive localization should be larger than in active localization. Let's plot this. Since there was no effect of age, we pool all participants.
 
 ```{r fig.height=5, fig.width=5}
-fig6_efferent_localization()
+fig5_efferent_localization()
 ```
 
 Data points above the identity line are participants where the variance (sd) in passive localization is larger than in active localization, and those would be in line with an MLE or Bayes optimal integration account of afferent and efferent signals in these tasks. While there are a lot of data points that are in line with an MLE-like account (159/270 = 58.9% of participants have higher variance in the passive as compared to the active condition), there are also a lot of participants with data points that go against an MLE account (111/270 = 41.1%). On average the standard deviation in passive localization is 0.3 degrees larger than that in active localization, and this difference is significant (t(269)=4.07, p\<.001, $BF_{10}$= 197.1). However, if we'd want to do "reverse MLE", in order to get an estimate of the contribution of efferent signals, this would require all data to have the property that variance is higher in passive as compared to active localization, which is not the case. This argues against a straightforward Bayes-optimal integration of efferent and afferent signals in hand localization as measured here.
@@ -252,7 +252,7 @@ One thing to keep in mind is that localization is performed after the movement h
 That said, we're also interested in if and how the variance in the other variables relate to each other.
 
 ```{r other_variance_relations, fig.width=8, fig.height=4.5}
-fig5_variance_relations()
+fig6_variance_relations()
 ```
 
 There could be a weak relationship between noise in training reaches, and noise in no-cursor reaches (ODR: $R^2$=0.22), but the data fans out from the origin (clear heteroscedasticity). There is a floor effect, of course, and this could drive part of that relationship.
@@ -287,8 +287,8 @@ The scatter plot does not show any clear relationship between any pair of variab
 
 There might be some relationship between proprioceptive recalibration and implicit motor adaptation (measured here as localization shifts and exclude strategy reach aftereffects). Both presumably tap into implicit processes. This relationship was present in one earlier paper (CRessman & Henriques, 20210) based on estimates of proprioceptive recalibration using 2-AFC methods with 50+ trial staircases. However, the same method failed to re-produce this in other work (e.g. Salomonczyk et al, 2011; Barkley et al., 2014). Perhaps the duration of the measurement watered down any relationship. We did see that the size of (presumably implicit) rebounds is related to both active and passive hand localization shifts (Ruttle et al., 2021) where the measurement of a single data point takes only 1 trial. We did see it in two papers based on part of the data we use here as well (Gastrock et al., 2020; Modchalingam et al., 2019), which also uses single-trial measurements, so it should not be surprising that we can reproduce this effect here.
 
-```{r fig.width=6, fig.height=3}
-fig9_localizationShift2_implicit()
+```{r fig.width=6, fig.height=6}
+fig9_localization_2_implicit()
 ```
 
 Here we first test if the changes can be predicted by the variance in aligned localization. The idea is that if hand localization shifts are a perceptual change, and maximum likelihood approaches to cue integration would still have some relevance here, then perceptual processes with higher variance should shift more. That is: participants with higher variance in hand localization should have higher localization shifts. And if localization shifts are part of reach aftereffects, then participants with higher localization variances should also have higher aftereffects.
@@ -330,10 +330,6 @@ We can see if one of the two models predicts aftereffects better than the other.
 compareAftereffectPredictions()
 ```
 
-Interestingly, passive localization (without efferent information) is better than active localization in predicting exclude strategy reach aftereffects. But not significantly so (p=0.503). Both models work roughly equally well, so we plot both here:
-
-```{r multiple_regression, fig.width=8, fig.height=4}
-fig10_multiple_regressions()
-```
+Interestingly, passive localization (without efferent information) is better than active localization in predicting exclude strategy reach aftereffects. But not significantly so (p=0.503). Both models work roughly equally well, and their quality of fit is shown above.
 
 Both models explain a roughly the same, decent portion of the variance, but there are clearly other processes involved in reach aftereffects.
