@@ -156,6 +156,29 @@ baselineVarianceFollowUps <- function() {
 #   
 # }
 
+openClosedLoopDifference <- function() {
+  
+  df <- read.csv('data/descriptors.csv', stringsAsFactors = FALSE)
+  
+  # get the difference between open and closed loop:
+  closed <- df$aligned_training_sd
+  open   <- df$aligned_nocursor_sd
+  
+  prop_incr <- ((mean(open) - mean(closed)) / mean(closed))
+  cat(sprintf('increase in the averages: %0.1f%%\n',(prop_incr*100)))
+  prop_incr <- ((median(open) - median(closed)) / median(closed))
+  cat(sprintf('increase in the medians:  %0.1f%%\n',(prop_incr*100)))
+  prop_incr <- mean((open - closed) / closed)
+  cat(sprintf('average of the increases: %0.1f%%\n',(prop_incr*100)))
+  prop_incr <- median((open - closed) / closed)
+  cat(sprintf('median of the increases:  %0.1f%%\n\n',(prop_incr*100)))
+  
+                          
+  # prop_incr <- ((open - closed) / closed)
+  # print(BayesFactor::ttestBF(prop_incr, mu=0))
+  
+}
+
 # reverse Maximum Likelihood Estimate -----
 
 MLE_weights <- function(FUN=mean) {
