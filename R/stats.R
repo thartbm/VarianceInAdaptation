@@ -188,7 +188,7 @@ MLE_weights <- function(FUN=mean) {
   sig2_ae <- FUN(df$aligned_activelocalization_sd)^2
   sig2_a  <- FUN(df$aligned_passivelocalization_sd)^2
   
-  sig2_e <- -sig2_ae * (sig2_a / (sig2_ae-sig2_a))
+  sig2_e <- sig2_ae * (sig2_a / (sig2_a-sig2_ae))
   
   w_a <- (1/sig2_a) / ((1/sig2_a) + (1/sig2_e))
   w_e <- (1/sig2_e) / ((1/sig2_a) + (1/sig2_e))
