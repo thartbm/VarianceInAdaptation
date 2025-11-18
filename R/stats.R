@@ -216,14 +216,57 @@ predictAftereffects <- function(trace=0) {
   df <- df[,c('group', 'participant', 'exclusion','aligned_activelocalization_sd', 'aligned_passivelocalization_sd', 'activelocalization_shift', 'passivelocalization_shift')]
   
   # cat('########## predict aftereffects from ACTIVE localization:\n\n')
-  active.model <- step(lm(exclusion ~ activelocalization_shift + aligned_activelocalization_sd, data=df),
-                       direction='both',
-                       trace=trace)
+  # active.model <- step(lm(exclusion ~ activelocalization_shift + aligned_activelocalization_sd, data=df),
+  #                      direction='both',
+  #                      trace=trace)
+  
+  active_both  <- lm(exclusion ~ activelocalization_shift + aligned_activelocalization_sd, data=df)
+  active_sd    <- lm(exclusion ~ aligned_activelocalization_sd, data=df)
+  active_shift <- lm(exclusion ~ activelocalization_shift, data=df)
+  active.AIC <- stats::AIC(  
+                             active_both,
+                             active_sd,
+                             active_shift, k=4 )
+  
+  # active.AIC <- stats::AIC(  lm(exclusion ~ activelocalization_shift + aligned_activelocalization_sd, data=df),
+  #                            lm(exclusion ~ aligned_activelocalization_sd, data=df),
+  #                            lm(exclusion ~ activelocalization_shift, data=df ) )
+  
+  active.rll <- relativeLikelihood(active.AIC$AIC)
+  
+  if (trace) {
+    cat('active model AICs:\n')
+    print(active.AIC)
+    cat('relative log likelihoods:\n')
+    print(active.rll)
+  }
+  
   # print(summary(active.model))
   # cat('########## predict aftereffects from PASSIVE localization:\n\n')
-  passive.model <- step(lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd, data=df),
-                        direction='both',
-                        trace=trace)
+  # passive.model <- step(lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd, data=df),
+  #                       direction='both',
+  #                       trace=trace)
+  
+  passive_both  <- lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd, data=df)
+  passive_sd    <- lm(exclusion ~ aligned_passivelocalization_sd, data=df)
+  passive_shift <- lm(exclusion ~ passivelocalization_shift, data=df )
+  passive.AIC <- stats::AIC(  
+                              passive_both,
+                              passive_sd,
+                              passive_shift )
+  # passive.AIC <- stats::AIC(  lm(exclusion ~ passivelocalization_shift + aligned_passivelocalization_sd, data=df),
+  #                             lm(exclusion ~ aligned_passivelocalization_sd, data=df),
+  #                             lm(exclusion ~ passivelocalization_shift, data=df ) )
+  passive.rll <- relativeLikelihood(passive.AIC$AIC)
+
+  if (trace) {
+    cat('passive model AICs:\n')
+    print(passive.AIC)
+    cat('relative likelihoods:\n')
+    print(passive.rll)
+  }
+  
+  # print(which.max(passive.rll))
   # print(summary(passive.model))
 
   # this gives somewhat weird results: it keeps 1 of the shifts, and one of the sds... but I suppose the two shifts and the two sds share a lot of variance, so this should have been expected?
@@ -233,8 +276,8 @@ predictAftereffects <- function(trace=0) {
   
   if (trace == 0) {
     return(list('data'=df,
-                'active.model'=active.model,
-                'passive.model'=passive.model))
+                'active.model'  = c(active_both,  active_sd,  active_shift)[ which.max(active.rll)],
+                'passive.model' = c(passive_both, passive_sd, passive_shift)[which.max(passive.rll)]))
   }
   
 }
