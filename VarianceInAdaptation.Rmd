@@ -44,7 +44,7 @@ source('R/figures.R')
 # do statistics:
 source('R/stats.R')
 # extra crappy things:
-source('R/try_out.R')
+# source('R/try_out.R')
 ```
 
 Now we are ready to download the full data set:
@@ -140,7 +140,7 @@ sessions <- c('aligned')
 
 One participants seems to be missing a 9 trials from each of the 4 kinds of localization (a whole consecutive block in 3 kinds). Other than that, there are only one or two trials missing from a few participants. This is workable data.
 
-# Sample
+# Data set
 
 Let's have a look at the sample of data and its sources.
 
@@ -189,7 +189,7 @@ The variance (or standard deviation, really) is higher in no-cursor trials it se
 baselineVarianceTests()
 ```
 
-So the model fits better when the factor `variable` (the measures of variance) is included (BF_10=6.83e+15). There is no real evidence one way or another for the factor `age` (BF_10=0.421). But the model is equally good whether or not the interaction is included (BF_10=0.128). (Notice that these Bayes Factors depend on random samples, so their exact value changes from run to run.)
+So the model fits better when the factor `variable` (the measures of variance) is included (BF_10=6.83e+15). There is no real evidence one way or another for the factor `age` (BF_10=0.421). But the model is equally good whether or not the interaction is included (BF_10=0.128). (Notice that these Bayes Factors use random samples, so their exact value changes from run to run.)
 
 ## Variance follow-ups
 
@@ -199,7 +199,17 @@ In the figure it was clear that no-cursors had higher variance than the other ty
 baselineVarianceFollowUps()
 ```
 
-Indeed there is very good evidence that no-cursor trials have higher variance than the other 3 types of reaches. There is also evidence that the variance in reach training trials is equal to that in the two types of localization trials. Note: localization is less noisy than no-cursor reaches, and it's spread is very comparable with the spread of regular training reaches.
+Indeed there is very good evidence that no-cursor trials have higher variance than the other 3 types of reaches.
+
+```{r}
+openClosedLoopDifference()
+```
+
+Like the source variables, the percentage increase is not normaly distributed, so perhaps the median works best. We see about 28% increase in median standard deviations between closed- and open loop reaches, going from about 6.01 sd to 7.71 sd. Bayesian t-test do not require normally distributed data.
+
+There is also evidence that the variance in reach training trials is equal to that in the two types of localization trials.
+
+Note: this means hand localization is less noisy than no-cursor reaches, and it's spread is very comparable with the spread of regular training reaches.
 
 Finally, there is evidence that there is a difference in the amount of variance in the two types of localization trials ($BF_{10}=197.2$). Given the large number of participants, however, that last effect might not be as big or meaningful as expected. We'll look into this some more next.
 
@@ -333,3 +343,24 @@ compareAftereffectPredictions()
 Interestingly, passive localization (without efferent information) is better than active localization in predicting exclude strategy reach aftereffects. But not significantly so (p=0.503). Both models work roughly equally well, and their quality of fit is shown above.
 
 Both models explain a roughly the same, decent portion of the variance, but there are clearly other processes involved in reach aftereffects.
+
+# Output all figures
+
+All figures are stored in various formats.
+
+```{r plotting_figures, include=FALSE, echo=FALSE, eval=TRUE}
+
+for (target in c('pdf', 'svg', 'png')) {
+  
+  fig3_localizationProperties(target=target)
+  fig4_sd_distributions(target=target)
+  fig5_efferent_localization(target=target)
+  fig6_variance_relations(target=target)
+  fig7_variance2_learning(target=target)
+  fig8_localizationSD2_implicit(target=target)
+  fig9_localization_2_implicit(target=target)
+  
+}
+
+```
+
