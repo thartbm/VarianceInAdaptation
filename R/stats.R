@@ -266,6 +266,11 @@ predictAftereffects <- function(trace=0) {
     print(passive.rll)
   }
   
+  if (trace) { # these actually are different!!!
+    cat('passive both compared to active both:\n\n')
+    print(relativeLikelihood(c(passive.AIC$AIC[1], active.AIC$AIC[1])))
+  }
+  
   # print(which.max(passive.rll))
   # print(summary(passive.model))
 

@@ -556,7 +556,7 @@ fig8_localizationSD2_implicit <- function(target='inline') {
 #   
 # }
 
-fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
+fig9_localization_2_implicit <- function(target='inline', add_info=TRUE, modelRegression='OLS') {
   
   filename <- 'Fig9'  
   width  <- 6
@@ -601,11 +601,12 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
   
   limits <- list( c(10,-20), c(-5,35),
                   c(10,-20), c(-5,35)   )
-  
-
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # the first two scatter plots are just data
+  # we have a standard function for that:
   figX_scatters(target='inline',
                 var_pairs=var_pairs,
-                filename='Fig9_localizationvShift_2_implicit',
+                filename='Fig9_localizationvShift_2_implicit', # not needed?
                 col_idx=c(3,4),
                 pch=16,
                 lim=limits,
@@ -615,6 +616,9 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
                 addregression='ODR',
                 mat=matrix(c(1,2,3,4),nrow=2,byrow=TRUE))
   
+  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+  # the second two scatters have a multiple regression prediction
+  # we need specialized code for that:
   
   models        <- predictAftereffects()
   df            <- models$data
@@ -651,9 +655,16 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
   col = colors[3]
   
   # active color = 3
-  add_OLS_regression(x = x,
-                     y = y,
-                     col=col)
+  if (modelRegression == 'OLS') {
+    add_OLS_regression(x = x,
+                       y = y,
+                       col=col)
+  }
+  if (modelRegression == 'ODR') {
+    add_ODR_regression(x = x,
+                       y = y,
+                       col=col)
+  }
   
   if (add_info) {
     
@@ -710,9 +721,17 @@ fig9_localization_2_implicit <- function(target='inline', add_info=TRUE) {
   col = colors[4]
   
   # passive color = 4
-  add_OLS_regression(x = x,
-                     y = y,
-                     col = col)
+  if (modelRegression == 'OLS') {
+    add_OLS_regression(x = x,
+                       y = y,
+                       col=col)
+  }
+  if (modelRegression == 'ODR') {
+    add_ODR_regression(x = x,
+                       y = y,
+                       col=col)
+  }
+  
   
   if (add_info) {
     
